@@ -36,7 +36,7 @@ public abstract class Production {
 
     private String title;
 
-    @Temporal(value = TemporalType.TIMESTAMP)
+    @Temporal(value = TemporalType.DATE)
     private Date creation;
 
     @Enumerated(EnumType.ORDINAL)

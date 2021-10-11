@@ -36,9 +36,11 @@ public class AnimatedCharacterController {
     public Object[][] getAll() {
         List<AnimatedCharacter> characters = acServ.getAll();
         Object[][] array = new Object[characters.size()][2];
+        AnimatedCharacter character;
         for (int i = 0; i < characters.size(); i++) {
-            array[i][0] = characters.get(i).getName();
-            array[i][1] = photoServ.getResponseEntity(characters.get(i).getImage());
+            character = characters.get(i);
+            array[i][0] = photoServ.getResponseEntity(characters.get(i).getImage());
+            array[i][1] = String.format("ID: %d || NAME: %s" , character.getId(), character.getName());
         }
         return array;
     }
