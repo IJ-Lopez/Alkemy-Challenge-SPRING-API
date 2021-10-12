@@ -42,8 +42,8 @@ public class PhotoService {
         }
         return photoRepo.save(photo);
     }
-    
-    public List<Photo> getAll(){
+
+    public List<Photo> getAll() {
         return photoRepo.findAll();
     }
 
@@ -137,21 +137,19 @@ public class PhotoService {
         }
     }
 
-    void checkPhoto(Photo image) throws ServiceException {
+    Photo checkPhoto(Photo image) throws ServiceException {
         if (image != null) {
-            if (image.getId() == null) {
-                throw new ServiceException("Photo ID cannot be null");
-            }
-            if (get(image.getId()) == null) {
-                create(image);
-            } else if (get(image.getId()) != image) {
+            if ((image.getId() != null) && (photoRepo.findById(image.getId()).isPresent()) && (get(image.getId()) != image)) {
                 throw new ServiceException("Photo ID already exists");
+            } else if (get(image.getId()) == null) {
+                image = create(image);
             }
         }
+        return image;
     }
-    
-    public ResponseEntity<byte[]> getResponseEntity(Photo photo){
-        if(photo == null){
+
+    public ResponseEntity<byte[]> getResponseEntity(Photo photo) {
+        if (photo == null) {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
         byte[] content = photo.getContent();

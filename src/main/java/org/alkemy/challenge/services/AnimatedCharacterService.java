@@ -29,58 +29,39 @@ public class AnimatedCharacterService {
     private PhotoService photoServ;
 
     @Transactional
-    public void create(AnimatedCharacter ac) throws ServiceException {
-        if (ac == null || ac.getId() == null) {
-            throw new ServiceException("Animated Character null or has no ID");
+    public AnimatedCharacter create(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            throw new ServiceException("Animated Character null");
         }
-        if (acRepo.findById(ac.getId()).isPresent()) {
+        if (ac.getId() != null && acRepo.findById(ac.getId()).isPresent()) {
+            if (get(ac.getId()) == ac) {
+                throw new ServiceException("Animated Character already exists");
+            }
             throw new ServiceException("Animated Character ID already exists");
         }
         Photo image = ac.getImage();
-        if (image != null) {
-            if (image.getId() == null) {
-                throw new ServiceException("Photo ID cannot be null");
-            }
-            if (photoServ.get(image.getId()) == null) {
-                photoServ.create(image);
-            } else if (photoServ.get(image.getId()) != image) {
-                throw new ServiceException("Photo ID already exists");
-            }
-        }
-        acRepo.save(ac);
+        photoServ.checkPhoto(image);
+        return acRepo.save(ac);
     }
 
     @Transactional
-    public void create(MultipartFile file, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
+    public AnimatedCharacter create(MultipartFile file, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
         if (name == null) {
             throw new ServiceException("Name cannot be null");
         }
-        if (lore == null) {
-            System.out.printf("%s lore is null. It will be replaced with an empty String%n", name);
-            lore = "";
+        Photo image = null;
+        if (file != null) {
+            image = new Photo(file);
+            photoServ.create(image);
         }
-        if (productions == null) {
-            System.out.printf("%s productions are null. They will be replaced with an empty List%n", name);
-            productions = new ArrayList();
-        }
-        Photo image = new Photo(file);
-        photoServ.create(image);
         AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore, productions);
-        acRepo.save(ac);
+        return acRepo.save(ac);
     }
 
     @Transactional
-    public void create(Photo image, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
+    public AnimatedCharacter create(Photo image, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
         if (name == null) {
             throw new ServiceException("Name cannot be null");
-        }
-        if (lore == null) {
-            System.out.printf("%s lore is null. It will be replaced with an empty String%n", name);
-            lore = "";
-        }
-        if (productions == null) {
-            System.out.printf("%s productions are null. They will be replaced with an empty List%n", name);
-            productions = new ArrayList();
         }
         if (image != null) {
             if (image.getId() == null) {
@@ -93,7 +74,7 @@ public class AnimatedCharacterService {
             }
         }
         AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore, productions);
-        acRepo.save(ac);
+        return acRepo.save(ac);
     }
 
     public List<AnimatedCharacter> getAll() {
@@ -336,7 +317,7 @@ public class AnimatedCharacterService {
             photoServ.checkPhoto(image);
             ac.setImage(image);
 
-            List<Production> prevProductions = ac.getAssociateProductions(); 
+            List<Production> prevProductions = ac.getAssociateProductions();
             if (!Objects.equals(updatedCharacter.getAssociateProductions(), prevProductions)) {
                 if (updatedCharacter.getAssociateProductions() == null) {
                     prevProductions.forEach(p -> {

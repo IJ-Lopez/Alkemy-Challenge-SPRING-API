@@ -29,6 +29,9 @@ public class DisneyUserService implements UserDetailsService {
         if (user == null) {
             throw new ServiceException("User cannot be null");
         }
+        if (user.getId() != null && userRepo.findById(user.getId()).isPresent()) {
+            throw new ServiceException("User ID already exists");
+        }
         if (user.getEmail() == null) {
             throw new ServiceException("User email cannot be null");
         }
@@ -43,7 +46,7 @@ public class DisneyUserService implements UserDetailsService {
     }
 
     @Transactional
-    public void create(String email, String password) throws ServiceException {
+    public DisneyUser create(String email, String password) throws ServiceException {
         if (email == null) {
             throw new ServiceException("User email cannot be null");
         }
@@ -54,7 +57,7 @@ public class DisneyUserService implements UserDetailsService {
             throw new ServiceException("User password cannot be null");
         }
         checkEmail(email);
-        userRepo.save(new DisneyUser(email, password));
+        return userRepo.save(new DisneyUser(email, password));
     }
 
     public List<DisneyUser> getAll() {
@@ -75,7 +78,7 @@ public class DisneyUserService implements UserDetailsService {
             throw new ServiceException("User mail cannot be null");
         }
         List<DisneyUser> users = userRepo.findByEmailIgnoreCase(mail);
-        if(users.isEmpty()){
+        if (users.isEmpty()) {
             throw new ServiceException("User not found");
         }
         return users.get(0);

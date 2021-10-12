@@ -1,0 +1,238 @@
+{
+	"info": {
+		"_postman_id": "1d682354-72c5-446f-86cd-9ff117132330",
+		"name": "Disney API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "_",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								""
+							]
+						},
+						"description": "Es el endpoint solicitado por el formLogin de Spring Security. Se puede modificar desde \"SecurityConfig.java\". En este endpoint debe estar la página del formulario de login."
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Para el logeo del usuario. Configurado con el formLogin de Spring Security.\n* Parámetros del Método:\n - \"email\": El email del usuario\n - \"password\": Contraseña del usuario\n* La página del formulario se encuentra en el endpoint \"/auth\"\n* Retorna el endpoint \"/auth/error\" en caso de problemas al logear\n* Retorna el endpoint \"/auth/success\" en caso de un logeo satisfactorio"
+					},
+					"response": []
+				},
+				{
+					"name": "error",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/error",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"error"
+							]
+						},
+						"description": "Retorno del método \"/auth/login\" en caso de error"
+					},
+					"response": []
+				},
+				{
+					"name": "success",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/success",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"success"
+							]
+						},
+						"description": "Retorno del método \"/auth/login\" en caso de logeo exitoso"
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "password1",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "password2",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Para el registro de cuenta.\n* Parámetros del Método:\n - \"email\": El email del usuario\n - \"password1\": Contraseña del usuario\n - \"password2\": Confirmar contraseña\n* Retorna:\n - LOGEO EXITOSO: Código 202 + Usuario Creado\n - PROBLEMAS DE LOGEO: Código 422 + Mensaje de Error"
+					},
+					"response": []
+				}
+			],
+			"description": "/auth endpoint requests"
+		},
+		{
+			"name": "characters",
+			"item": [
+				{
+					"name": "_",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [],
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/characters",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"characters"
+							]
+						},
+						"description": "Devuelve una lista completa de personajes con su Imagen, ID y Nombre, en forma de List*.\n\n* La lista es de tipo \"ListCharacterData\", un POJO con atributos:\n - (Response Entity) \"image\": Una Response Entity con los bytes de la foto\n - (int) \"id\": La id del personaje\n - (String) \"name\": El nombre del personaje"
+					},
+					"response": []
+				},
+				{
+					"name": "add",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/characters/400",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"characters",
+								"400"
+							]
+						},
+						"description": "TODO"
+					},
+					"response": []
+				}
+			],
+			"description": "\"/characters\" endpoint requests"
+		}
+	]
+}
