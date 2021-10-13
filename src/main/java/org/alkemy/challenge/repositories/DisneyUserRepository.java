@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DisneyUserRepository extends JpaRepository<DisneyUser, Integer>{
+public interface DisneyUserRepository extends JpaRepository<DisneyUser, String>{
     
     List<DisneyUser> findByEmailContainingIgnoreCase(String email);
     

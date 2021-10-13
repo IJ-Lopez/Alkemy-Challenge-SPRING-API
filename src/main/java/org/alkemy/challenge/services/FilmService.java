@@ -3,6 +3,7 @@ package org.alkemy.challenge.services;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import javax.transaction.Transactional;
 import org.alkemy.challenge.entities.AnimatedCharacter;
 import org.alkemy.challenge.entities.Category;
@@ -25,42 +26,41 @@ public class FilmService {
     private PhotoService photoServ;
 
     @Transactional
-    public void create(Film f) throws ServiceException {
-        if (f == null || f.getId() == null) {
-            throw new ServiceException("Film null or has no ID");
+    public Film create(Film f) throws ServiceException {
+        if (f == null){
+            throw new ServiceException("Film null");
         }
-        if (filmRepo.findById(f.getId()).isPresent()) {
+        if(f.getTitle() == null || f.getTitle().isEmpty()){
+            throw new ServiceException("Film movie cannot be null");
+        }
+        if(f.getId() != null && filmRepo.findById(f.getId()).isPresent()){
+            if(get(f.getId()) == f){
+                throw new ServiceException("Film already exists");
+            }
             throw new ServiceException("Film ID already exists");
         }
-        photoServ.checkPhoto(f.getImage());
-        filmRepo.save(f);
+        Photo image = f.getImage();
+        if(image != null){
+            if (f.getId() == null) {
+                f.setImage(photoServ.create(image));
+            } else if ((photoServ.get(f.getId()) != image) && !photoServ.get(f.getId()).equals(image)) {
+                throw new ServiceException("Photo ID already exists");
+            }
+        }
+        return filmRepo.save(f);
     }
 
     @Transactional
-    public void create(MultipartFile file, String title, Date creation, Stars stars, List<AnimatedCharacter> cast, List<Category> categories) throws ServiceException {
-        if (title == null) {
-            throw new ServiceException("Film title cannot be null");
-        }
-        if (creation == null) {
-            throw new ServiceException("Film creation date cannot be null");
-        }
+    public Film create(MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
         Photo image = new Photo(file);
-        photoServ.checkPhoto(image);
         Film f = new Film(image, title, creation, stars, cast, categories);
-        filmRepo.save(f);
+        return create(f);
     }
 
     @Transactional
-    public void create(Photo image, String title, Date creation, Stars stars, List<AnimatedCharacter> cast, List<Category> categories) throws ServiceException {
-        if (title == null) {
-            throw new ServiceException("Film title cannot be null");
-        }
-        if (creation == null) {
-            throw new ServiceException("Film creation date cannot be null");
-        }
-        photoServ.checkPhoto(image);
+    public Film create(Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
         Film f = new Film(image, title, creation, stars, cast, categories);
-        filmRepo.save(f);
+        return create(f);
     }
 
     public List<Film> getAll() {
@@ -116,7 +116,7 @@ public class FilmService {
     }
 
     @Transactional
-    public void update(int id, MultipartFile file, String title, Date creation, Stars stars, List<AnimatedCharacter> cast) throws ServiceException {
+    public void update(int id, MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Film title cannot be null");
         }
@@ -132,7 +132,7 @@ public class FilmService {
             f.setCast(cast);
             
             Photo image = new Photo(file);
-            photoServ.checkPhoto(image);
+            photoServ.create(image);
             f.setImage(image);
             
             filmRepo.save(f);
@@ -142,7 +142,7 @@ public class FilmService {
     }
 
     @Transactional
-    public void update(int id, Photo image, String title, Date creation, Stars stars, List<AnimatedCharacter> cast) throws ServiceException {
+    public void update(int id, Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Film title cannot be null");
         }
@@ -157,7 +157,7 @@ public class FilmService {
             f.setStars(stars);
             f.setCast(cast);
             
-            photoServ.checkPhoto(image);
+            photoServ.create(image);
             f.setImage(image);
             
             filmRepo.save(f);
@@ -185,7 +185,7 @@ public class FilmService {
             f.setStars(updatedFilm.getStars());
             f.setCast(updatedFilm.getCast());
             
-            photoServ.checkPhoto(updatedFilm.getImage());
+            photoServ.create(updatedFilm.getImage());
             f.setImage(updatedFilm.getImage());
             
             filmRepo.save(f);
@@ -216,7 +216,7 @@ public class FilmService {
             f.setStars(updatedFilm.getStars());
             f.setCast(updatedFilm.getCast());
             
-            photoServ.checkPhoto(updatedFilm.getImage());
+            photoServ.create(updatedFilm.getImage());
             f.setImage(updatedFilm.getImage());
             
             filmRepo.save(f);

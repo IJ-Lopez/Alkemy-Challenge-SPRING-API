@@ -1,8 +1,8 @@
 package org.alkemy.challenge.entities;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -32,7 +32,7 @@ public class Category {
             joinColumns = @JoinColumn(name = "CATEGORY_ID", referencedColumnName = "ID"),
             inverseJoinColumns = @JoinColumn(name = "PRODUCTION_ID", referencedColumnName = "ID")
     )
-    private List<Production> productions = new ArrayList();
+    private Set<Production> productions = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date upload = new Date();
@@ -43,7 +43,7 @@ public class Category {
     public Category() {
     }
 
-    public Category(String name, Photo image, List<Production> productions) {
+    public Category(String name, Photo image, Set<Production> productions) {
         this.name = name;
         this.image = image;
         this.productions = productions;
@@ -69,11 +69,11 @@ public class Category {
         this.image = image;
     }
 
-    public List<Production> getProductions() {
+    public Set<Production> getProductions() {
         return productions;
     }
 
-    public void setProductions(List<Production> productions) {
+    public void setProductions(Set<Production> productions) {
         this.productions = productions;
     }
 

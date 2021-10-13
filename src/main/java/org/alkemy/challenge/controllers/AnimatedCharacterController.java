@@ -2,8 +2,10 @@ package org.alkemy.challenge.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.alkemy.challenge.controllers.pojo.DetailedCharacterData;
 import org.alkemy.challenge.controllers.pojo.ListCharacterData;
 import org.alkemy.challenge.entities.AnimatedCharacter;
 import org.alkemy.challenge.entities.Photo;
@@ -41,38 +43,68 @@ public class AnimatedCharacterController {
     @GetMapping()
     public List<ListCharacterData> getAll() {
         List<AnimatedCharacter> characters = acServ.getAll();
-        AnimatedCharacter character;
         List<ListCharacterData> response = new ArrayList<>();
-        for (int i = 0; i < characters.size(); i++) {
-            character = characters.get(i);
-            ListCharacterData data = new ListCharacterData();
-            data.setImage(photoServ.getResponseEntity(character.getImage()));
-            data.setId(character.getId());
-            data.setName(character.getName());
-            response.add(data);
-        }
+        characters.forEach(c -> {
+           response.add(new ListCharacterData(c));
+        });
         return response;
     }
 
-//    @PostMapping(value = "/add", params = {"character"})
-//    public ResponseEntity create(@RequestBody AnimatedCharacter character) {
-//        try {
-//            return new ResponseEntity(acServ.create(character), HttpStatus.CREATED);
-//        } catch (ServiceException ex) {
-//            Logger.getLogger(AnimatedCharacterController.class.getName()).log(Level.SEVERE, null, ex);
-//            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-//        }
-//    }
-
-    @PostMapping(value = "/add", params={"name"})
-    public ResponseEntity create(@RequestParam String name, @RequestParam(required = false) Integer photoId, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) List<Production> productions) {
+    @PostMapping(value = "/add", params = {"character"})
+    public ResponseEntity add(@RequestBody AnimatedCharacter character) {
         try {
-            Photo photo = null;
-            if (photoId != null) {
-                photo = photoServ.get(photoId);
+            return new ResponseEntity(acServ.create(character), HttpStatus.CREATED);
+        } catch (ServiceException ex) {
+            Logger.getLogger(AnimatedCharacterController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @PostMapping(value = "/add", params = {"name"})
+    public ResponseEntity add(@RequestParam String name, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
+        Photo photo = null;
+        AnimatedCharacter character = new AnimatedCharacter(photo, name, age, weight, lore, productions);
+        return add(character);
+    }
+
+    @PostMapping(value = "/add", params = {"name", "imageId"})
+    public ResponseEntity add(@RequestParam String name, @RequestParam Integer imageId, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
+        try {
+            Photo image = null;
+            if (imageId != null) {
+                image = photoServ.get(imageId);
             }
-            AnimatedCharacter character = new AnimatedCharacter(photo, name, age, weight, lore, productions);
-            return new ResponseEntity(acServ.create(photo, name, 0, 0, lore, productions), HttpStatus.CREATED);
+            AnimatedCharacter character = new AnimatedCharacter(image, name, age, weight, lore, productions);
+            return add(character);
+        } catch (ServiceException ex) {
+            Logger.getLogger(AnimatedCharacterController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @PostMapping(value = "/add", params = {"name", "file"})
+    public ResponseEntity create(@RequestParam String name, @RequestParam MultipartFile file, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
+        try {
+            Photo image = null;
+            if (file != null) {
+                image = photoServ.create(file);
+            }
+            AnimatedCharacter character = new AnimatedCharacter(image, name, age, weight, lore, productions);
+            return add(character);
+        } catch (ServiceException ex) {
+            Logger.getLogger(AnimatedCharacterController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @PostMapping(value = "/add", params = {"name", "image"})
+    public ResponseEntity create(@RequestParam String name, @RequestParam Photo image, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
+        try {
+            if (image != null) {
+                image = photoServ.create(image);
+            }
+            AnimatedCharacter character = new AnimatedCharacter(image, name, age, weight, lore, productions);
+            return add(character);
         } catch (ServiceException ex) {
             Logger.getLogger(AnimatedCharacterController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
@@ -80,101 +112,54 @@ public class AnimatedCharacterController {
     }
 
     @GetMapping(path = "/{id}")
-    public Object[] getDetails(ModelMap model, @PathVariable("id") Integer id) {
+    public ResponseEntity getDetails(ModelMap model, @PathVariable("id") Integer id) {
         try {
             if (id == null) {
-                throw new ServiceException();
+                throw new ServiceException("ID cannot be null");
             }
-            AnimatedCharacter ac = acServ.get(id);
-            Object[] details = new Object[2];
-            details[0] = photoServ.getResponseEntity(ac.getImage());
-
-            String description = String.format("ID : %d || NAME : %s%n"
-                    + "Age: %d || Weight: %d%n"
-                    + "Lore: %s%n"
-                    + "Appears in:%n",
-                    ac.getId(), ac.getName(), ac.getAge(), ac.getWeight(), ac.getLore());
-            for (Production p : ac.getAssociateProductions()) {
-                description += String.format("* %s%n", p.getTitle());
+            try {
+                AnimatedCharacter ac = acServ.get(id);
+                DetailedCharacterData lcd = new DetailedCharacterData(ac);
+                return new ResponseEntity(lcd, HttpStatus.OK);
+            } catch (ServiceException ex) {
+                return new ResponseEntity(HttpStatus.NO_CONTENT);
             }
-            details[1] = description;
-            return details;
         } catch (ServiceException ex) {
-            model.put("error", ex.getMessage());
             Logger.getLogger(AnimatedCharacterController.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println(ex.getMessage());
-            return null;
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
-    @PostMapping("/updateImage")
-    public void updatePhoto(@RequestParam("id") int id, @RequestParam("photo") MultipartFile file) {
+    @PostMapping(value = "/update", params = {"id"})
+    public ResponseEntity updatePhoto(@RequestParam Integer id, @RequestParam(required = false) Integer photoId, @RequestParam(required = false) String name, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
         try {
+            if(id == null){
+                throw new ServiceException("ID cannot be null");
+            }
             AnimatedCharacter ac = acServ.get(id);
-            Photo photo = new Photo(file);
-            ac.setImage(photo);
+            if(photoId != null){
+                ac.setImage(photoServ.get(photoId));    
+            }
+            if(name != null && !name.isEmpty()){
+                ac.setName(name);
+            }
+            if(age != null){
+                ac.setAge(age);
+            }
+            if(weight != null && weight > 0){
+                ac.setWeight(weight);
+            }
+            if(lore != null){
+                ac.setLore(lore);
+            }
+            if(productions != null){
+                ac.setAssociateProductions(productions);
+            }
             acServ.update(ac);
+            return new ResponseEntity(HttpStatus.OK);
         } catch (ServiceException ex) {
-            System.out.println(ex.getMessage());
-            Logger
-                    .getLogger(AnimatedCharacterController.class
-                            .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @PostMapping("/updateName")
-    public void updateName(@RequestParam("id") int id, @RequestParam("name") String name) {
-        try {
-            AnimatedCharacter ac = acServ.get(id);
-            ac.setName(name);
-            acServ.update(ac);
-        } catch (ServiceException ex) {
-            System.out.println(ex.getMessage());
-            Logger
-                    .getLogger(AnimatedCharacterController.class
-                            .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @PostMapping("/updateLore")
-    public void updateLore(@RequestParam("id") int id, @RequestParam("lore") String lore) {
-        try {
-            AnimatedCharacter ac = acServ.get(id);
-            ac.setLore(lore);
-            acServ.update(ac);
-        } catch (ServiceException ex) {
-            System.out.println(ex.getMessage());
-            Logger
-                    .getLogger(AnimatedCharacterController.class
-                            .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @PostMapping("/updateWeight")
-    public void updateWeight(@RequestParam("id") int id, @RequestParam("weight") int weight) {
-        try {
-            AnimatedCharacter ac = acServ.get(id);
-            ac.setWeight(weight);
-            acServ.update(ac);
-        } catch (ServiceException ex) {
-            System.out.println(ex.getMessage());
-            Logger
-                    .getLogger(AnimatedCharacterController.class
-                            .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @PostMapping("/updateAge")
-    public void updateAge(@RequestParam("id") int id, @RequestParam("age") int age) {
-        try {
-            AnimatedCharacter ac = acServ.get(id);
-            ac.setWeight(age);
-            acServ.update(ac);
-        } catch (ServiceException ex) {
-            System.out.println(ex.getMessage());
-            Logger
-                    .getLogger(AnimatedCharacterController.class
-                            .getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AnimatedCharacterController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -182,7 +167,7 @@ public class AnimatedCharacterController {
     public void addProduction(@RequestParam("id") int id, @RequestParam("productionId") int productionId) {
         try {
             AnimatedCharacter ac = acServ.get(id);
-            Production production = prodServ.getById(id);
+            Production production = prodServ.get(id);
             if (ac.getAssociateProductions().contains(production)) {
                 throw new ServiceException("Character was already in this production");
             }
@@ -200,7 +185,7 @@ public class AnimatedCharacterController {
     public void removeProduction(@RequestParam("id") int id, @RequestParam("productionId") int productionId) {
         try {
             AnimatedCharacter ac = acServ.get(id);
-            ac.getAssociateProductions().remove(prodServ.getById(id));
+            ac.getAssociateProductions().remove(prodServ.get(id));
             acServ.update(ac);
         } catch (ServiceException ex) {
             System.out.println(ex.getMessage());

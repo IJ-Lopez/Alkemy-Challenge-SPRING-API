@@ -3,6 +3,7 @@ package org.alkemy.challenge.services;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import javax.transaction.Transactional;
 import org.alkemy.challenge.entities.Category;
 import org.alkemy.challenge.entities.Photo;
@@ -30,27 +31,27 @@ public class CategoryService {
         if (categoryRepo.findById(c.getId()).isPresent()) {
             throw new ServiceException("Category ID already exists");
         }
-        photoServ.checkPhoto(c.getImage());
+        photoServ.create(c.getImage());
         categoryRepo.save(c);
     }
 
     @Transactional
-    public void create(String name, MultipartFile file, List<Production> productions) throws ServiceException {
+    public void create(String name, MultipartFile file, Set<Production> productions) throws ServiceException {
         if (name == null) {
             throw new ServiceException("Category name cannot be null");
         }
         Photo image = new Photo(file);
-        photoServ.checkPhoto(image);
+        photoServ.create(image);
         Category c = new Category(name, image, productions);
         categoryRepo.save(c);
     }
 
     @Transactional
-    public void create(String name, Photo image, List<Production> productions) throws ServiceException {
+    public void create(String name, Photo image, Set<Production> productions) throws ServiceException {
         if (name == null) {
             throw new ServiceException("Category name cannot be null");
         }
-        photoServ.checkPhoto(image);
+        photoServ.create(image);
         Category c = new Category(name, image, productions);
         categoryRepo.save(c);
     }
@@ -146,7 +147,7 @@ public class CategoryService {
     }
 
     @Transactional
-    public void update(int id, String name, MultipartFile file, List<Production> productions) throws ServiceException {
+    public void update(int id, String name, MultipartFile file, Set<Production> productions) throws ServiceException {
         if (name == null) {
             throw new ServiceException("Category name cannot be null");
         }
@@ -157,7 +158,7 @@ public class CategoryService {
             c.setProductions(productions);
             
             Photo image = new Photo(file);
-            photoServ.checkPhoto(image);
+            photoServ.create(image);
             c.setImage(image);
             
             categoryRepo.save(c);
@@ -167,7 +168,7 @@ public class CategoryService {
     }
     
     @Transactional
-    public void update(int id, String name, Photo image, List<Production> productions) throws ServiceException {
+    public void update(int id, String name, Photo image, Set<Production> productions) throws ServiceException {
         if (name == null) {
             throw new ServiceException("Category name cannot be null");
         }
@@ -177,7 +178,7 @@ public class CategoryService {
             c.setName(name);
             c.setProductions(productions);
             
-            photoServ.checkPhoto(image);
+            photoServ.create(image);
             c.setImage(image);
             
             categoryRepo.save(c);
@@ -200,7 +201,7 @@ public class CategoryService {
             c.setName(c.getName());
             c.setProductions(c.getProductions());
             
-            photoServ.checkPhoto(c.getImage());
+            photoServ.create(c.getImage());
             c.setImage(c.getImage());
             
             categoryRepo.save(c);
@@ -226,7 +227,7 @@ public class CategoryService {
             c.setName(c.getName());
             c.setProductions(c.getProductions());
             
-            photoServ.checkPhoto(c.getImage());
+            photoServ.create(c.getImage());
             c.setImage(c.getImage());
             
             categoryRepo.save(c);

@@ -2,7 +2,9 @@ package org.alkemy.challenge.entities;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -20,7 +22,7 @@ public class AnimatedCharacter {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, optional = true)
     private Photo image;
 
     private String name;
@@ -29,7 +31,7 @@ public class AnimatedCharacter {
     private String lore;
 
     @ManyToMany(mappedBy = "cast")
-    private List<Production> associateProductions = new ArrayList();
+    private Set<Production> associateProductions = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date upload = new Date();
@@ -40,7 +42,7 @@ public class AnimatedCharacter {
     public AnimatedCharacter() {
     }
 
-    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore, List<Production> associateProductions) {
+    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore, Set<Production> associateProductions) {
         this.image = image;
         this.name = name;
         this.age = age;
@@ -93,11 +95,11 @@ public class AnimatedCharacter {
         this.lore = lore;
     }
 
-    public List<Production> getAssociateProductions() {
+    public Set<Production> getAssociateProductions() {
         return associateProductions;
     }
 
-    public void setAssociateProductions(List<Production> associateProductions) {
+    public void setAssociateProductions(Set<Production> associateProductions) {
         this.associateProductions = associateProductions;
     }
 

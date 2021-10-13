@@ -18,7 +18,7 @@ public class ProductionService {
         return productionRepo.findAll();
     }
 
-    public Production getById(int id) throws ServiceException {
+    public Production get(int id) throws ServiceException {
         Optional<Production> opt = productionRepo.findById(id);
         if (opt.isPresent()) {
             return opt.get();

@@ -22,25 +22,33 @@ public class PhotoService {
     private PhotoRepository photoRepo;
 
     @Transactional
-    public Photo create(MultipartFile file) throws ServiceException {
-        Photo photo = new Photo(file);
-        validation(photo);
-        if (photo.getId() == null) {
-            throw new ServiceException("Photo ID cannot be null");
+    public Photo create(Photo photo) throws ServiceException {
+        if (validation(photo)) {
+            return photoRepo.save(photo);
         }
-        return photoRepo.save(photo);
+        throw new ServiceException("Photo already exists");
     }
 
     @Transactional
-    public Photo create(Photo photo) throws ServiceException {
-        validation(photo);
-        if (photo.getId() == null) {
-            throw new ServiceException("Photo ID cannot be null");
+    public Photo create(MultipartFile file) throws ServiceException {
+        Photo photo = new Photo(file);
+        return create(photo);
+    }
+
+    @Transactional
+    public Photo createIfNotExists(Photo photo) throws ServiceException {
+        if (photo != null) {
+            if (validation(photo)) {
+                return photoRepo.save(photo);
+            }
         }
-        if (photoRepo.findById(photo.getId()).isPresent()) {
-            throw new ServiceException("Photo ID already exists");
-        }
-        return photoRepo.save(photo);
+        return photo;
+    }
+    
+    @Transactional
+    public Photo createIfNotExists(MultipartFile file) throws ServiceException {
+        Photo photo = new Photo(file);
+        return createIfNotExists(photo);
     }
 
     public List<Photo> getAll() {
@@ -52,7 +60,7 @@ public class PhotoService {
         if (opt.isPresent()) {
             return opt.get();
         } else {
-            throw new ServiceException("Photo no found");
+            throw new ServiceException("Photo not found");
         }
     }
 
@@ -122,7 +130,7 @@ public class PhotoService {
         }
     }
 
-    private void validation(Photo photo) throws ServiceException {
+    private boolean validation(Photo photo) throws ServiceException {
         if (photo == null) {
             throw new ServiceException("Photo cannot be null");
         }
@@ -135,19 +143,25 @@ public class PhotoService {
         if (photo.getContent() == null) {
             throw new ServiceException("Photo content cannot be null");
         }
-    }
-
-    Photo checkPhoto(Photo image) throws ServiceException {
-        if (image != null) {
-            if ((image.getId() != null) && (photoRepo.findById(image.getId()).isPresent()) && (get(image.getId()) != image)) {
+        if ((photo.getId() != null) && (get(photo.getId()) != null)) {
+            if (get(photo.getId()) != photo) {
                 throw new ServiceException("Photo ID already exists");
-            } else if (get(image.getId()) == null) {
-                image = create(image);
             }
+            return false;
         }
-        return image;
+        return true;
     }
 
+//    Photo checkPhoto(Photo photo) throws ServiceException {
+//        if (photo != null) {
+//            if ((photo.getId() == null) || get(photo.getId()) == null) {
+//                photo = create(photo);
+//            } else if (get(photo.getId()) != photo) {
+//                throw new ServiceException("Photo ID already exists");
+//            }
+//        }
+//        return photo;
+//    }
     public ResponseEntity<byte[]> getResponseEntity(Photo photo) {
         if (photo == null) {
             return new ResponseEntity(HttpStatus.NOT_FOUND);

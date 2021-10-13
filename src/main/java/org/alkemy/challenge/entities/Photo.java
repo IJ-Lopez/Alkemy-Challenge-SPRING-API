@@ -29,6 +29,9 @@ public class Photo {
     }
 
     public Photo(MultipartFile file) {
+        if(file == null){
+            return;
+        }
         this.name = file.getName();
         this.mime = file.getContentType();
         try {

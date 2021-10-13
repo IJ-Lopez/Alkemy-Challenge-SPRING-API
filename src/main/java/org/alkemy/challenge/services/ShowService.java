@@ -6,6 +6,7 @@
 package org.alkemy.challenge.services;
 
 import java.util.Date;
+import java.util.Set;
 import java.util.List;
 import java.util.Optional;
 import javax.transaction.Transactional;
@@ -37,12 +38,12 @@ public class ShowService {
         if (showRepo.findById(s.getId()).isPresent()) {
             throw new ServiceException("Show ID already exists");
         }
-        photoServ.checkPhoto(s.getImage());
+        photoServ.create(s.getImage());
         showRepo.save(s);
     }
 
     @Transactional
-    public void create(MultipartFile file, String title, Date creation, Stars stars, List<AnimatedCharacter> cast, List<Category> categories) throws ServiceException {
+    public void create(MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Show title cannot be null");
         }
@@ -50,20 +51,20 @@ public class ShowService {
             throw new ServiceException("Show creation date cannot be null");
         }
         Photo image = new Photo(file);
-        photoServ.checkPhoto(image);
+        photoServ.create(image);
         Show s = new Show(image, title, creation, stars, cast, categories);
         showRepo.save(s);
     }
 
     @Transactional
-    public void create(Photo image, String title, Date creation, Stars stars, List<AnimatedCharacter> cast, List<Category> categories) throws ServiceException {
+    public void create(Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Show title cannot be null");
         }
         if (creation == null) {
             throw new ServiceException("Show creation date cannot be null");
         }
-        photoServ.checkPhoto(image);
+        photoServ.create(image);
         Show s = new Show(image, title, creation, stars, cast, categories);
         showRepo.save(s);
     }
@@ -121,7 +122,7 @@ public class ShowService {
     }
 
     @Transactional
-    public void update(int id, MultipartFile file, String title, Date creation, Stars stars, List<AnimatedCharacter> cast) throws ServiceException {
+    public void update(int id, MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Show title cannot be null");
         }
@@ -137,7 +138,7 @@ public class ShowService {
             s.setCast(cast);
             
             Photo image = new Photo(file);
-            photoServ.checkPhoto(image);
+            photoServ.create(image);
             s.setImage(image);
             
             showRepo.save(s);
@@ -147,7 +148,7 @@ public class ShowService {
     }
 
     @Transactional
-    public void update(int id, Photo image, String title, Date creation, Stars stars, List<AnimatedCharacter> cast) throws ServiceException {
+    public void update(int id, Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Show title cannot be null");
         }
@@ -162,7 +163,7 @@ public class ShowService {
             s.setStars(stars);
             s.setCast(cast);
             
-            photoServ.checkPhoto(image);
+            photoServ.create(image);
             s.setImage(image);
             
             showRepo.save(s);
@@ -190,7 +191,7 @@ public class ShowService {
             s.setStars(updatedShow.getStars());
             s.setCast(updatedShow.getCast());
             
-            photoServ.checkPhoto(updatedShow.getImage());
+            photoServ.create(updatedShow.getImage());
             s.setImage(updatedShow.getImage());
             
             showRepo.save(s);
@@ -221,7 +222,7 @@ public class ShowService {
             s.setStars(updatedShow.getStars());
             s.setCast(updatedShow.getCast());
             
-            photoServ.checkPhoto(updatedShow.getImage());
+            photoServ.create(updatedShow.getImage());
             s.setImage(updatedShow.getImage());
             
             showRepo.save(s);

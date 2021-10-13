@@ -1,45 +1,51 @@
 package org.alkemy.challenge.controllers.pojo;
 
+import org.alkemy.challenge.entities.AnimatedCharacter;
 import org.alkemy.challenge.entities.Photo;
-import org.springframework.http.ResponseEntity;
 
 public class ListCharacterData {
     
-    private ResponseEntity<byte[]> image;
+    private Photo image;
     private int id;
     private String name;
 
     public ListCharacterData() {
     }
 
-    public ListCharacterData(ResponseEntity<byte[]> image, int id, String name) {
+    public ListCharacterData(Photo image, int id, String name) {
         this.image = image;
         this.id = id;
         this.name = name;
     }
 
-    public ResponseEntity<byte[]> getImage() {
-        return image;
+    public ListCharacterData(AnimatedCharacter ac) {
+        this.image = ac.getImage();
+        this.id = ac.getId();
+        this.name = ac.getName();
     }
 
-    public void setImage(ResponseEntity<byte[]> image) {
+    public void setImage(Photo image) {
         this.image = image;
-    }
-
-    public int getId() {
-        return id;
     }
 
     public void setId(int id) {
         this.id = id;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Photo getImage() {
+        return image;
+    }
+
+    public int getId() {
+        return id;
+    }
+
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-    
 }

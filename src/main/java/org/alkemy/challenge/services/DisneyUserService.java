@@ -64,7 +64,10 @@ public class DisneyUserService implements UserDetailsService {
         return userRepo.findAll();
     }
 
-    public DisneyUser get(int id) throws ServiceException {
+    public DisneyUser get(String id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("User ID cannot be null");
+        }
         Optional<DisneyUser> opt = userRepo.findById(id);
         if (opt.isPresent()) {
             return opt.get();
@@ -92,7 +95,10 @@ public class DisneyUserService implements UserDetailsService {
     }
 
     @Transactional
-    public void update(int id, String mail, String password) throws ServiceException {
+    public void update(String id, String mail, String password) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("User ID cannot be null");
+        }
         if (mail == null) {
             throw new ServiceException("User mail cannot be null");
         }
@@ -116,7 +122,10 @@ public class DisneyUserService implements UserDetailsService {
     }
 
     @Transactional
-    public void update(int id, DisneyUser updatedUser) throws ServiceException {
+    public void update(String id, DisneyUser updatedUser) throws ServiceException {
+        if(id == null){
+            throw new ServiceException("User ID cannot be null");
+        }
         if (updatedUser == null) {
             throw new ServiceException("User cannot be null");
         }
@@ -173,7 +182,7 @@ public class DisneyUserService implements UserDetailsService {
     }
 
     @Transactional
-    public void shutDown(int id) throws ServiceException {
+    public void shutDown(String id) throws ServiceException {
         Optional<DisneyUser> opt = userRepo.findById(id);
         if (opt.isPresent()) {
             DisneyUser user = opt.get();
@@ -185,7 +194,10 @@ public class DisneyUserService implements UserDetailsService {
     }
 
     @Transactional
-    public void reOpen(int id) throws ServiceException {
+    public void reOpen(String id) throws ServiceException {
+        if(id == null){
+            throw new ServiceException("User ID cannot be null");
+        }
         Optional<DisneyUser> opt = userRepo.findById(id);
         if (opt.isPresent()) {
             DisneyUser user = opt.get();
