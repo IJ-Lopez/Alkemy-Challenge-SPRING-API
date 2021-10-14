@@ -30,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/movies")
-public class FilmController {
+public class MoviesController {
 
     @Autowired
     private FilmService filmServ;
@@ -43,7 +43,7 @@ public class FilmController {
         try {
             return new ResponseEntity(filmServ.create(movie), HttpStatus.CREATED);
         } catch (ServiceException ex) {
-            Logger.getLogger(FilmController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
@@ -62,7 +62,7 @@ public class FilmController {
             }
             return add(new Film(image, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
-            Logger.getLogger(FilmController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
@@ -76,7 +76,7 @@ public class FilmController {
             }
             return add(new Film(image, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
-            Logger.getLogger(FilmController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
@@ -89,7 +89,7 @@ public class FilmController {
             }
             return add(new Film(image, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
-            Logger.getLogger(FilmController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
@@ -117,7 +117,7 @@ public class FilmController {
                 return new ResponseEntity(HttpStatus.NO_CONTENT);
             }
         } catch (ServiceException ex) {
-            Logger.getLogger(FilmController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
@@ -150,7 +150,7 @@ public class FilmController {
             filmServ.update(f);
             return new ResponseEntity(HttpStatus.OK);
         } catch (ServiceException ex) {
-            Logger.getLogger(FilmController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }

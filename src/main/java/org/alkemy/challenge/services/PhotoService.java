@@ -1,6 +1,5 @@
 package org.alkemy.challenge.services;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import javax.transaction.Transactional;
@@ -8,10 +7,6 @@ import org.alkemy.challenge.entities.Photo;
 import org.alkemy.challenge.repositories.PhotoRepository;
 import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,7 +39,7 @@ public class PhotoService {
         }
         return photo;
     }
-    
+
     @Transactional
     public Photo createIfNotExists(MultipartFile file) throws ServiceException {
         Photo photo = new Photo(file);
@@ -79,26 +74,10 @@ public class PhotoService {
     }
 
     @Transactional
-    public Photo update(int id, MultipartFile file) throws ServiceException {
-        validation(new Photo(file));
-        Optional<Photo> opt = photoRepo.findById(id);
-        if (opt.isPresent()) {
-            Photo photo = opt.get();
-            photo.setMime(file.getContentType());
-            photo.setName(file.getName());
-            try {
-                photo.setContent(file.getBytes());
-            } catch (IOException ex) {
-                throw new ServiceException(ex.getMessage());
-            }
-            return photoRepo.save(photo);
-        } else {
-            throw new ServiceException("Photo not found");
+    public Photo update(Integer id, Photo updatedPhoto) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
         }
-    }
-
-    @Transactional
-    public Photo update(int id, Photo updatedPhoto) throws ServiceException {
         validation(updatedPhoto);
         Optional<Photo> opt = photoRepo.findById(id);
         if (opt.isPresent()) {
@@ -110,24 +89,26 @@ public class PhotoService {
         } else {
             throw new ServiceException("Photo not found");
         }
+    }
+
+    @Transactional
+    public Photo update(Integer id, String name, String contentType, byte[] content) throws ServiceException {
+        Photo photo = new Photo(name, contentType, content);
+        return update(id, photo);
+    }
+
+    @Transactional
+    public Photo update(Integer id, MultipartFile file) throws ServiceException {
+        Photo photo = null;
+        if (file != null) {
+            photo = new Photo(file);
+        }
+        return update(id, new Photo(file));
     }
 
     @Transactional
     public Photo update(Photo updatedPhoto) throws ServiceException {
-        validation(updatedPhoto);
-        if (updatedPhoto.getId() == null) {
-            throw new ServiceException("Photo ID cannot be null");
-        }
-        Optional<Photo> opt = photoRepo.findById(updatedPhoto.getId());
-        if (opt.isPresent()) {
-            Photo photo = opt.get();
-            photo.setMime(updatedPhoto.getMime());
-            photo.setName(updatedPhoto.getName());
-            photo.setContent(updatedPhoto.getContent());
-            return photoRepo.save(photo);
-        } else {
-            throw new ServiceException("Photo not found");
-        }
+        return update(updatedPhoto.getId(), updatedPhoto);
     }
 
     private boolean validation(Photo photo) throws ServiceException {
@@ -151,25 +132,4 @@ public class PhotoService {
         }
         return true;
     }
-
-//    Photo checkPhoto(Photo photo) throws ServiceException {
-//        if (photo != null) {
-//            if ((photo.getId() == null) || get(photo.getId()) == null) {
-//                photo = create(photo);
-//            } else if (get(photo.getId()) != photo) {
-//                throw new ServiceException("Photo ID already exists");
-//            }
-//        }
-//        return photo;
-//    }
-    public ResponseEntity<byte[]> getResponseEntity(Photo photo) {
-        if (photo == null) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
-        }
-        byte[] content = photo.getContent();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_JPEG);
-        return new ResponseEntity(content, headers, HttpStatus.OK);
-    }
-
 }

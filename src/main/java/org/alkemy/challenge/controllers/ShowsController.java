@@ -9,6 +9,6 @@ package org.alkemy.challenge.controllers;
  *
  * @author lopez
  */
-public class ShowController {
+public class ShowsController {
     
 }

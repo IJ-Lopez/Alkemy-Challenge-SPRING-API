@@ -1,9 +1,7 @@
 package org.alkemy.challenge.entities;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -42,14 +40,22 @@ public class AnimatedCharacter {
     public AnimatedCharacter() {
     }
 
-    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore, Set<Production> associateProductions) {
+    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore) {
         this.image = image;
         this.name = name;
         this.age = age;
         this.weight = weight;
         this.lore = lore;
-        this.associateProductions = associateProductions;
     }
+
+//    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore, Set<Production> productions) {
+//        this.image = image;
+//        this.name = name;
+//        this.age = age;
+//        this.weight = weight;
+//        this.lore = lore;
+//        this.associateProductions = productions;
+//    }
 
     public Integer getId() {
         return id;

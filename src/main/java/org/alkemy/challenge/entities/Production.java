@@ -1,9 +1,7 @@
 package org.alkemy.challenge.entities;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.persistence.DiscriminatorColumn;
@@ -53,7 +51,12 @@ public abstract class Production {
     )
     private Set<AnimatedCharacter> cast  = new HashSet();
 
-    @ManyToMany(mappedBy = "productions")
+    @ManyToMany
+    @JoinTable(
+            name = "PRODUCTION_CATEGORY",
+            joinColumns = @JoinColumn(name = "CATEGORY_ID", referencedColumnName = "ID"),
+            inverseJoinColumns = @JoinColumn(name = "PRODUCTION_ID", referencedColumnName = "ID")
+    )
     private Set<Category> categories  = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)

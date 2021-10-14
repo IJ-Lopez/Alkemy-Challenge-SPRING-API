@@ -19,41 +19,63 @@ public class CategoryService {
 
     @Autowired
     private CategoryRepository categoryRepo;
-    
+
     @Autowired
     private PhotoService photoServ;
 
     @Transactional
-    public void create(Category c) throws ServiceException {
+    public Category create(Category c) throws ServiceException {
         if (c == null) {
-            throw new ServiceException("Category null");
+            throw new ServiceException("Category cannot be null");
         }
-        if(isSaved(c) || !categoryRepo.findByName(c.getName()).isEmpty()){
+        if (c.getName() == null || c.getName().isEmpty()){
+            throw new ServiceException("Category name cannot be null");
+        }
+        if (isSaved(c)) {
             throw new ServiceException("Category already exists");
         }
         c.setImage(photoServ.createIfNotExists(c.getImage()));
-        categoryRepo.save(c);
+        return categoryRepo.save(c);
     }
 
     @Transactional
-    public void create(String name, MultipartFile file, Set<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Category name cannot be null");
+    public Category create(String name, MultipartFile file) throws ServiceException {
+        Photo image = null;
+        if(file != null){
+            image = new Photo(file);
         }
-        Photo image = new Photo(file);
-        photoServ.create(image);
-        Category c = new Category(name, image, productions);
-        categoryRepo.save(c);
+        Category c = new Category(name, image);
+        return create(c);
     }
 
     @Transactional
-    public void create(String name, Photo image, Set<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Category name cannot be null");
+    public Category create(String name, Photo image) throws ServiceException {
+        Category c = new Category(name, image);
+        return create(c);
+    }
+
+    @Transactional
+    public Category createIfNotExists(Category c) throws ServiceException {
+        if(!isSaved(c)){
+            c = create(c);
         }
-        photoServ.create(image);
-        Category c = new Category(name, image, productions);
-        categoryRepo.save(c);
+        return c;
+    }
+
+    @Transactional
+    public Category createIfNotExists(String name, MultipartFile file) throws ServiceException {
+        Photo image = null;
+        if(file != null){
+            image = new Photo(file);
+        }
+        Category c = new Category(name, image);
+        return createIfNotExists(c);
+    }
+
+    @Transactional
+    public Category createIfNotExists(String name, Photo image) throws ServiceException {
+        Category c = new Category(name, image);
+        return createIfNotExists(c);
     }
 
     public List<Category> getAll() {
@@ -145,99 +167,48 @@ public class CategoryService {
         List<Category> characters = categoryRepo.findByProductionId(p.getId());
         return characters;
     }
-
-    @Transactional
-    public void update(int id, String name, MultipartFile file, Set<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Category name cannot be null");
-        }
-        Optional<Category> opt = categoryRepo.findById(id);
-        if (opt.isPresent()) {
-            Category c = opt.get();
-            c.setName(name);
-            c.setProductions(productions);
-            
-            Photo image = new Photo(file);
-            photoServ.create(image);
-            c.setImage(image);
-            
-            categoryRepo.save(c);
-        } else {
-            throw new ServiceException("Category not found");
-        }
-    }
     
     @Transactional
-    public void update(int id, String name, Photo image, Set<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Category name cannot be null");
+    public Category update(Integer id, String name, Photo image) throws ServiceException {
+        if(id == null){
+            throw new ServiceException("ID cannot be null");
         }
         Optional<Category> opt = categoryRepo.findById(id);
         if (opt.isPresent()) {
             Category c = opt.get();
             c.setName(name);
-            c.setProductions(productions);
-            
-            photoServ.create(image);
-            c.setImage(image);
-            
-            categoryRepo.save(c);
+            c.setImage(photoServ.createIfNotExists(c.getImage()));
+            c.setProductions(null);
+            return categoryRepo.save(c);
         } else {
             throw new ServiceException("Category not found");
         }
     }
 
     @Transactional
-    public void update(int id, Category updatedCategory) throws ServiceException {
-        if (updatedCategory == null) {
-            throw new ServiceException("Category cannot be null");
+    public Category update(Integer id, String name, MultipartFile file) throws ServiceException {
+        Photo image = null;
+        if(file != null){
+            image = new Photo(file);
         }
-        if (updatedCategory.getName() == null) {
-            throw new ServiceException("Category name cannot be null");
-        }
-        Optional<Category> opt = categoryRepo.findById(id);
-        if (opt.isPresent()) {
-            Category c = opt.get();
-            c.setName(c.getName());
-            c.setProductions(c.getProductions());
-            
-            photoServ.create(c.getImage());
-            c.setImage(c.getImage());
-            
-            categoryRepo.save(c);
-        } else {
-            throw new ServiceException("Category not found");
-        }
+        return update(id, name, image);
     }
 
     @Transactional
-    public void update(Category updatedCategory) throws ServiceException {
-        if (updatedCategory == null) {
-            throw new ServiceException("Category cannot be null");
-        }
-        if (updatedCategory.getId() == null) {
-            throw new ServiceException("Category ID cannot be null");
-        }
-        if (updatedCategory.getName() == null) {
-            throw new ServiceException("Category name cannot be null");
-        }
-        Optional<Category> opt = categoryRepo.findById(updatedCategory.getId());
-        if (opt.isPresent()) {
-            Category c = opt.get();
-            c.setName(c.getName());
-            c.setProductions(c.getProductions());
-            
-            photoServ.create(c.getImage());
-            c.setImage(c.getImage());
-            
-            categoryRepo.save(c);
-        } else {
-            throw new ServiceException("Category not found");
-        }
+    public Category update(Integer id, Category updatedCategory) throws ServiceException {
+        return update(id, updatedCategory.getName(), updatedCategory.getImage());
     }
 
     @Transactional
-    public void shutDown(int id) throws ServiceException {
+    public Category update(Category updatedCategory) throws ServiceException {
+        return update(updatedCategory.getId(), updatedCategory.getName(), updatedCategory.getImage());
+    }
+
+    @Transactional
+    public void shutDown(Integer id) throws ServiceException {
+        if(id == null){
+            throw new ServiceException("ID cannot be null");
+        }
         Optional<Category> opt = categoryRepo.findById(id);
         if (opt.isPresent()) {
             Category c = opt.get();
@@ -249,7 +220,7 @@ public class CategoryService {
     }
 
     @Transactional
-    public void reOpen(int id) throws ServiceException {
+    public void reOpen(Integer id) throws ServiceException {
         Optional<Category> opt = categoryRepo.findById(id);
         if (opt.isPresent()) {
             Category c = opt.get();
@@ -259,10 +230,10 @@ public class CategoryService {
             throw new ServiceException("Category not found");
         }
     }
-    
-    private boolean isSaved(Category c) throws ServiceException{
-        if(c.getId() != null && categoryRepo.findById(c.getId()).isPresent()){
-            if(get(c.getId())!= c){
+
+    private boolean isSaved(Category c) throws ServiceException {
+        if (c.getId() != null && categoryRepo.findById(c.getId()).isPresent()) {
+            if (get(c.getId()) != c && getByName(c.getName()).isEmpty()) {
                 throw new ServiceException("Category ID already exists");
             }
             return true;

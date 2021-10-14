@@ -25,7 +25,7 @@ public class DisneyUserService implements UserDetailsService {
     private DisneyUserRepository userRepo;
 
     @Transactional
-    public void create(DisneyUser user) throws ServiceException {
+    public DisneyUser create(DisneyUser user) throws ServiceException {
         if (user == null) {
             throw new ServiceException("User cannot be null");
         }
@@ -42,22 +42,16 @@ public class DisneyUserService implements UserDetailsService {
             throw new ServiceException("User password cannot be null");
         }
         checkEmail(user.getEmail());
-        userRepo.save(user);
+        return userRepo.save(user);
     }
 
     @Transactional
     public DisneyUser create(String email, String password) throws ServiceException {
-        if (email == null) {
-            throw new ServiceException("User email cannot be null");
+        DisneyUser user = null;
+        if (email != null && password != null) {
+            user = new DisneyUser(email, password);
         }
-        if (!EmailValidator.getInstance().isValid(email)) {
-            throw new ServiceException("User email not valid");
-        }
-        if (password == null) {
-            throw new ServiceException("User password cannot be null");
-        }
-        checkEmail(email);
-        return userRepo.save(new DisneyUser(email, password));
+        return create(user);
     }
 
     public List<DisneyUser> getAll() {
@@ -95,94 +89,46 @@ public class DisneyUserService implements UserDetailsService {
     }
 
     @Transactional
-    public void update(String id, String mail, String password) throws ServiceException {
+    public DisneyUser update(String id, String mail, String password) throws ServiceException {
         if (id == null) {
             throw new ServiceException("User ID cannot be null");
-        }
-        if (mail == null) {
-            throw new ServiceException("User mail cannot be null");
         }
         if (!EmailValidator.getInstance().isValid(mail)) {
             throw new ServiceException("User email not valid");
         }
-        if (password == null) {
-            throw new ServiceException("User password cannot be null");
-        }
         Optional<DisneyUser> opt = userRepo.findById(id);
         if (opt.isPresent()) {
             DisneyUser user = opt.get();
-
             checkEmail(mail);
             user.setEmail(mail);
             user.setPassword(password);
-            userRepo.save(user);
+            return userRepo.save(user);
         } else {
             throw new ServiceException("User not found");
         }
     }
 
     @Transactional
-    public void update(String id, DisneyUser updatedUser) throws ServiceException {
-        if(id == null){
-            throw new ServiceException("User ID cannot be null");
-        }
-        if (updatedUser == null) {
+    public DisneyUser update(String id, DisneyUser updatedUser) throws ServiceException {
+        if(updatedUser == null){
             throw new ServiceException("User cannot be null");
         }
-        if (updatedUser.getEmail() == null) {
-            throw new ServiceException("User mail cannot be null");
-        }
-        if (!EmailValidator.getInstance().isValid(updatedUser.getEmail())) {
-            throw new ServiceException("User email not valid");
-        }
-        if (updatedUser.getPassword() == null) {
-            throw new ServiceException("User password cannot be null");
-        }
-        Optional<DisneyUser> opt = userRepo.findById(id);
-        if (opt.isPresent()) {
-            DisneyUser user = opt.get();
-
-            checkEmail(updatedUser.getEmail());
-            user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-            userRepo.save(user);
-        } else {
-            throw new ServiceException("User not found");
-        }
+        return update(id, updatedUser.getEmail(), updatedUser.getPassword());
     }
 
     @Transactional
-    public void update(DisneyUser updatedUser) throws ServiceException {
+    public DisneyUser update(DisneyUser updatedUser) throws ServiceException {
         if (updatedUser == null) {
             throw new ServiceException("User cannot be null");
         }
-        if (updatedUser.getId() == null) {
-            throw new ServiceException("User ID cannot be null");
-        }
-        if (updatedUser.getEmail() == null) {
-            throw new ServiceException("User mail cannot be null");
-        }
-        if (!EmailValidator.getInstance().isValid(updatedUser.getEmail())) {
-            throw new ServiceException("User email not valid");
-        }
-        if (updatedUser.getPassword() == null) {
-            throw new ServiceException("User password cannot be null");
-        }
-        Optional<DisneyUser> opt = userRepo.findById(updatedUser.getId());
-        if (opt.isPresent()) {
-            DisneyUser user = opt.get();
-
-            checkEmail(updatedUser.getEmail());
-            user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-            userRepo.save(user);
-        } else {
-            throw new ServiceException("User not found");
-        }
+        return update(updatedUser.getId(), updatedUser.getEmail(), updatedUser.getPassword());
     }
 
     @Transactional
     public void shutDown(String id) throws ServiceException {
+        if(id == null){
+            throw new ServiceException("ID cannot be null");
+        }
         Optional<DisneyUser> opt = userRepo.findById(id);
         if (opt.isPresent()) {
             DisneyUser user = opt.get();
@@ -196,7 +142,7 @@ public class DisneyUserService implements UserDetailsService {
     @Transactional
     public void reOpen(String id) throws ServiceException {
         if(id == null){
-            throw new ServiceException("User ID cannot be null");
+            throw new ServiceException("ID cannot be null");
         }
         Optional<DisneyUser> opt = userRepo.findById(id);
         if (opt.isPresent()) {

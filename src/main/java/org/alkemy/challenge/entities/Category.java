@@ -8,8 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
@@ -27,12 +25,7 @@ public class Category {
     @OneToOne
     private Photo image;
 
-    @ManyToMany
-    @JoinTable(
-            name = "CATEGORY_PRODUCTION",
-            joinColumns = @JoinColumn(name = "CATEGORY_ID", referencedColumnName = "ID"),
-            inverseJoinColumns = @JoinColumn(name = "PRODUCTION_ID", referencedColumnName = "ID")
-    )
+    @ManyToMany(mappedBy = "categories")
     private Set<Production> productions = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)
@@ -44,11 +37,16 @@ public class Category {
     public Category() {
     }
 
-    public Category(String name, Photo image, Set<Production> productions) {
+    public Category(String name, Photo image) {
         this.name = name;
         this.image = image;
-        this.productions = productions;
     }
+
+//    public Category(String name, Photo image, Set<Production> productions) {
+//        this.name = name;
+//        this.image = image;
+//        this.productions = productions;
+//    }
 
     public Integer getId() {
         return id;

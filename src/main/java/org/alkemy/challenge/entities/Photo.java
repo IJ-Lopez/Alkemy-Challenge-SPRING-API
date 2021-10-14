@@ -1,8 +1,6 @@
 package org.alkemy.challenge.entities;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Entity
@@ -28,16 +27,13 @@ public class Photo {
     public Photo() {
     }
 
-    public Photo(MultipartFile file) {
-        if(file == null){
-            return;
-        }
+    public Photo(MultipartFile file) throws ServiceException {
         this.name = file.getName();
         this.mime = file.getContentType();
         try {
             this.content = file.getBytes();
         } catch (IOException ex) {
-            Logger.getLogger(Photo.class.getName()).log(Level.SEVERE, null, ex);
+            throw new ServiceException();
         }
     }
 

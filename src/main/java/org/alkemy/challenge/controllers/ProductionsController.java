@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/productions")
-public class ProductionController {
+public class ProductionsController {
     
     @Autowired
     private ProductionService prodServ;
@@ -47,7 +47,7 @@ public class ProductionController {
                 return new ResponseEntity(HttpStatus.NO_CONTENT);
             }
         } catch (ServiceException ex) {
-            Logger.getLogger(ProductionController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ProductionsController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
