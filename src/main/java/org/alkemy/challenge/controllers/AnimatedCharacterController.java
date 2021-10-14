@@ -83,7 +83,7 @@ public class AnimatedCharacterController {
     }
 
     @PostMapping(value = "/add", params = {"name", "file"})
-    public ResponseEntity create(@RequestParam String name, @RequestParam MultipartFile file, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
+    public ResponseEntity add(@RequestParam String name, @RequestParam MultipartFile file, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
         try {
             Photo image = null;
             if (file != null) {
@@ -98,7 +98,7 @@ public class AnimatedCharacterController {
     }
 
     @PostMapping(value = "/add", params = {"name", "image"})
-    public ResponseEntity create(@RequestParam String name, @RequestParam Photo image, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
+    public ResponseEntity add(@RequestParam String name, @RequestParam Photo image, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer weight, @RequestParam(required = false) String lore, @RequestParam(required = false) Set<Production> productions) {
         try {
             if (image != null) {
                 image = photoServ.create(image);

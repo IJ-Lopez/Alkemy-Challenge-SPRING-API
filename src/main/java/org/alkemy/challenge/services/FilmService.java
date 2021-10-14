@@ -9,7 +9,9 @@ import org.alkemy.challenge.entities.AnimatedCharacter;
 import org.alkemy.challenge.entities.Category;
 import org.alkemy.challenge.entities.Film;
 import org.alkemy.challenge.entities.Photo;
+import org.alkemy.challenge.entities.Production;
 import org.alkemy.challenge.entities.enumerations.Stars;
+import org.alkemy.challenge.repositories.CategoryRepository;
 import org.alkemy.challenge.repositories.FilmRepository;
 import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,30 +23,36 @@ public class FilmService {
 
     @Autowired
     private FilmRepository filmRepo;
-    
+
     @Autowired
     private PhotoService photoServ;
 
+    @Autowired
+    private AnimatedCharacterService acServ;
+    
+    @Autowired
+    private CategoryRepository catRepo;
+
     @Transactional
     public Film create(Film f) throws ServiceException {
-        if (f == null){
+        if (f == null) {
             throw new ServiceException("Film null");
         }
-        if(f.getTitle() == null || f.getTitle().isEmpty()){
+        if (isSaved(f)){
+            throw new ServiceException("Film already exists");
+        }
+        if (f.getTitle() == null || f.getTitle().isEmpty()) {
             throw new ServiceException("Film movie cannot be null");
         }
-        if(f.getId() != null && filmRepo.findById(f.getId()).isPresent()){
-            if(get(f.getId()) == f){
-                throw new ServiceException("Film already exists");
-            }
-            throw new ServiceException("Film ID already exists");
-        }
-        Photo image = f.getImage();
-        if(image != null){
-            if (f.getId() == null) {
-                f.setImage(photoServ.create(image));
-            } else if ((photoServ.get(f.getId()) != image) && !photoServ.get(f.getId()).equals(image)) {
-                throw new ServiceException("Photo ID already exists");
+        f.setImage(photoServ.createIfNotExists(f.getImage()));
+        if (f.getCast() != null && !f.getCast().isEmpty()){
+            Set<AnimatedCharacter> cast = f.getCast();
+            for(AnimatedCharacter ac : cast){
+                if(ac != null){
+                    if(!acServ.isSaved(ac)){
+                        
+                    }
+                }
             }
         }
         return filmRepo.save(f);
@@ -61,6 +69,44 @@ public class FilmService {
     public Film create(Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
         Film f = new Film(image, title, creation, stars, cast, categories);
         return create(f);
+    }
+
+    @Transactional
+    public Film createIfNotExists(Film f) throws ServiceException {
+        if (f != null) {
+            if (f.getId() != null && filmRepo.findById(f.getId()).isPresent()) {
+                if (get(f.getId()) == f) {
+                    return f;
+                }
+                throw new ServiceException("Film ID already exists");
+            }
+            if (f.getTitle() == null || f.getTitle().isEmpty()) {
+                throw new ServiceException("Film movie cannot be null");
+            }
+            Photo image = f.getImage();
+            if (image != null) {
+                if (f.getId() == null) {
+                    f.setImage(photoServ.create(image));
+                } else if ((photoServ.get(f.getId()) != image) && !photoServ.get(f.getId()).equals(image)) {
+                    throw new ServiceException("Photo ID already exists");
+                }
+            }
+            return filmRepo.save(f);
+        }
+        return f;
+    }
+
+    @Transactional
+    public Film createIfNotExists(MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
+        Photo image = new Photo(file);
+        Film f = new Film(image, title, creation, stars, cast, categories);
+        return createIfNotExists(f);
+    }
+
+    @Transactional
+    public Film createIfNotExists(Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
+        Film f = new Film(image, title, creation, stars, cast, categories);
+        return createIfNotExists(f);
     }
 
     public List<Film> getAll() {
@@ -116,6 +162,54 @@ public class FilmService {
     }
 
     @Transactional
+    public void update(int id, Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
+        if (title == null) {
+            throw new ServiceException("Film title cannot be null");
+        }
+        if (creation == null) {
+            throw new ServiceException("Film creation date cannot be null");
+        }
+        Optional<Film> opt = filmRepo.findById(id);
+        if (opt.isPresent()) {
+            Film f = opt.get();
+            f.setTitle(title);
+            f.setCreation(creation);
+            f.setStars(stars);
+            f.setCast(cast);
+
+            Set<Category> prevCategories = f.getCategories();
+            if (categories != prevCategories && !prevCategories.equals(categories)) {
+                if (categories == null || categories.isEmpty()) {
+                    prevCategories.forEach(c -> {
+                        c.getProductions().remove(f);
+                    });
+                    catRepo.saveAll(prevCategories);
+                } else {
+                    categories.forEach(c -> {
+                        if (!prevCategories.contains(c)) {
+                            c.getProductions().remove(f);
+                            catRepo.save(c);
+                        }
+                    });
+                    prevCategories.forEach(c -> {
+                        if (!categories.contains(c)) {
+                            c.getProductions().add(f);
+                            catRepo.save(c);
+                        }
+                    });
+                }
+                f.setCategories(categories);
+            }
+            image = photoServ.createIfNotExists(image);
+            f.setImage(image);
+
+            filmRepo.save(f);
+        } else {
+            throw new ServiceException("Film not found");
+        }
+    }
+
+    @Transactional
     public void update(int id, MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Film title cannot be null");
@@ -130,36 +224,11 @@ public class FilmService {
             f.setCreation(creation);
             f.setStars(stars);
             f.setCast(cast);
-            
+
             Photo image = new Photo(file);
             photoServ.create(image);
             f.setImage(image);
-            
-            filmRepo.save(f);
-        } else {
-            throw new ServiceException("Film not found");
-        }
-    }
 
-    @Transactional
-    public void update(int id, Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast) throws ServiceException {
-        if (title == null) {
-            throw new ServiceException("Film title cannot be null");
-        }
-        if (creation == null) {
-            throw new ServiceException("Film creation date cannot be null");
-        }
-        Optional<Film> opt = filmRepo.findById(id);
-        if (opt.isPresent()) {
-            Film f = opt.get();
-            f.setTitle(title);
-            f.setCreation(creation);
-            f.setStars(stars);
-            f.setCast(cast);
-            
-            photoServ.create(image);
-            f.setImage(image);
-            
             filmRepo.save(f);
         } else {
             throw new ServiceException("Film not found");
@@ -184,10 +253,10 @@ public class FilmService {
             f.setCreation(updatedFilm.getCreation());
             f.setStars(updatedFilm.getStars());
             f.setCast(updatedFilm.getCast());
-            
+
             photoServ.create(updatedFilm.getImage());
             f.setImage(updatedFilm.getImage());
-            
+
             filmRepo.save(f);
         } else {
             throw new ServiceException("Film not found");
@@ -215,10 +284,10 @@ public class FilmService {
             f.setCreation(updatedFilm.getCreation());
             f.setStars(updatedFilm.getStars());
             f.setCast(updatedFilm.getCast());
-            
+
             photoServ.create(updatedFilm.getImage());
             f.setImage(updatedFilm.getImage());
-            
+
             filmRepo.save(f);
         } else {
             throw new ServiceException("Film not found");
@@ -249,9 +318,19 @@ public class FilmService {
         }
     }
 
-    public void addCharacter(int filmId, int characterId) throws ServiceException{
+    public void addCharacter(int filmId, int characterId) throws ServiceException {
         Optional<Film> opt = filmRepo.findById(filmId);
         //TERMINAR PARA AÑADIR UN PERSONAJE A LA MUVI
+    }
+
+    private boolean isSaved(Film f) throws ServiceException{
+        if (f.getId() != null && filmRepo.findById(f.getId()).isPresent()) {
+            if (get(f.getId()) != f) {
+                throw new ServiceException("Film ID already exists");
+            }
+            return true;
+        }
+        return false;
     }
     
 }

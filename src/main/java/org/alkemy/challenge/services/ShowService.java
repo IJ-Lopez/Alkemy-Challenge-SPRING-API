@@ -68,6 +68,32 @@ public class ShowService {
         Show s = new Show(image, title, creation, stars, cast, categories);
         showRepo.save(s);
     }
+    @Transactional
+    public Show createIfNotExists(Show s) throws ServiceException {
+        if (s != null) {
+            if (s.getId() != null && showRepo.findById(s.getId()).isPresent()) {
+                if (get(s.getId()) == s) {
+                    return s;
+                }
+                throw new ServiceException("Show ID already exists");
+            }
+            return showRepo.save(s);
+        }
+        return s;
+    }
+
+    @Transactional
+    public Show createIfNotExists(MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
+        Photo image = new Photo(file);
+        Show s = new Show(image, title, creation, stars, cast, categories);
+        return createIfNotExists(s);
+    }
+
+    @Transactional
+    public Show createIfNotExists(Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
+        Show s = new Show(image, title, creation, stars, cast, categories);
+        return createIfNotExists(s);
+    }
 
     public List<Show> getAll() {
         return showRepo.findAll();

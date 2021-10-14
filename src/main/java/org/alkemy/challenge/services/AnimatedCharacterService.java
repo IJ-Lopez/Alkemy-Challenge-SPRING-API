@@ -1,14 +1,16 @@
 package org.alkemy.challenge.services;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.transaction.Transactional;
 import org.alkemy.challenge.entities.AnimatedCharacter;
+import org.alkemy.challenge.entities.Film;
 import org.alkemy.challenge.entities.Photo;
 import org.alkemy.challenge.entities.Production;
+import org.alkemy.challenge.entities.Show;
 import org.alkemy.challenge.repositories.AnimatedCharacterRepository;
 import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,12 @@ public class AnimatedCharacterService {
     private ProductionRepository prodRepo;
 
     @Autowired
+    private FilmService filmServ;
+
+    @Autowired
+    private ShowService showServ;
+
+    @Autowired
     private PhotoService photoServ;
 
     @Transactional
@@ -36,11 +44,8 @@ public class AnimatedCharacterService {
         if (ac.getName() == null || ac.getName().isEmpty()) {
             throw new ServiceException("Animated Character name cannot be null");
         }
-        if (ac.getId() != null && acRepo.findById(ac.getId()).isPresent()) {
-            if (get(ac.getId()) == ac) {
-                throw new ServiceException("Animated Character already exists");
-            }
-            throw new ServiceException("Animated Character ID already exists");
+        if (isSaved(ac)) {
+            throw new ServiceException("Animated Character already exists");
         }
         Photo image = ac.getImage();
         if (image != null) {
@@ -49,6 +54,21 @@ public class AnimatedCharacterService {
             } else if ((photoServ.get(ac.getId()) != image) && !photoServ.get(ac.getId()).equals(image)) {
                 throw new ServiceException("Photo ID already exists");
             }
+        }
+        if (ac.getAssociateProductions() != null) {
+            for (Production p : ac.getAssociateProductions()) {
+                if (p.getCast() == null) {
+                    p.setCast(new HashSet());
+                }
+                p.getCast().add(ac);
+                if (p.getClass() == Film.class) {
+                    filmServ.createIfNotExists((Film) p);
+                } else if (p.getClass() == Show.class) {
+                    showServ.createIfNotExists((Show) p);
+                }
+            }
+        } else {
+            ac.setAssociateProductions(new HashSet());
         }
         return acRepo.save(ac);
     }
@@ -66,7 +86,31 @@ public class AnimatedCharacterService {
     @Transactional
     public AnimatedCharacter create(Photo image, String name, Integer age, Integer weight, String lore, Set<Production> productions) throws ServiceException {
         AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore, productions);
-        return acRepo.save(ac);
+        return create(ac);
+    }
+
+    @Transactional
+    public AnimatedCharacter createIfNotExists(AnimatedCharacter ac) throws ServiceException {
+        if (!isSaved(ac)) {
+            ac = create(ac);
+        }
+        return ac;
+    }
+
+    @Transactional
+    public AnimatedCharacter createIfNotExists(MultipartFile file, String name, Integer age, Integer weight, String lore, Set<Production> productions) throws ServiceException {
+        Photo image = null;
+        if (file != null) {
+            image = new Photo(file);
+        }
+        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore, productions);
+        return createIfNotExists(ac);
+    }
+
+    @Transactional
+    public AnimatedCharacter createIfNotExists(Photo image, String name, Integer age, Integer weight, String lore, Set<Production> productions) throws ServiceException {
+        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore, productions);
+        return createIfNotExists(ac);
     }
 
     public List<AnimatedCharacter> getAll() {
@@ -179,21 +223,21 @@ public class AnimatedCharacterService {
 
             Set<Production> prevProductions = ac.getAssociateProductions();
             if (productions != prevProductions && !prevProductions.equals(productions)) {
-                if (productions == null) {
+                if (productions == null || productions.isEmpty()) {
                     prevProductions.forEach(p -> {
                         p.getCast().remove(ac);
                     });
                     prodRepo.saveAll(prevProductions);
                 } else {
-                    productions.forEach(p -> {
-                        if(!prevProductions.contains(p)){
-                            p.getCast().add(ac);
-                            prodRepo.save(p);
-                        }
-                    });
                     prevProductions.forEach(p -> {
                         if (!productions.contains(p)) {
                             p.getCast().remove(ac);
+                            prodRepo.save(p);
+                        }
+                    });
+                    productions.forEach(p -> {
+                        if (!prevProductions.contains(p)) {
+                            p.getCast().add(ac);
                             prodRepo.save(p);
                         }
                     });
@@ -252,6 +296,16 @@ public class AnimatedCharacterService {
         } else {
             throw new ServiceException("Animated Character not found");
         }
+    }
+
+    boolean isSaved(AnimatedCharacter ac) throws ServiceException {
+        if (ac.getId() != null && acRepo.findById(ac.getId()).isPresent()) {
+            if (get(ac.getId()) != ac) {
+                throw new ServiceException("Animated Character ID already exists");
+            }
+            return true;
+        }
+        return false;
     }
 
 }

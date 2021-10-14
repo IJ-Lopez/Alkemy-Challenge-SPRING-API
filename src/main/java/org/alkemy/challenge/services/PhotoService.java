@@ -134,7 +134,7 @@ public class PhotoService {
         if (photo == null) {
             throw new ServiceException("Photo cannot be null");
         }
-        if (photo.getName() == null) {
+        if (photo.getName() == null || photo.getName().isEmpty()) {
             throw new ServiceException("Photo name cannot be null");
         }
         if (photo.getMime() == null) {

@@ -25,13 +25,13 @@ public class CategoryService {
 
     @Transactional
     public void create(Category c) throws ServiceException {
-        if (c == null || c.getId() == null) {
-            throw new ServiceException("Category null or has no ID");
+        if (c == null) {
+            throw new ServiceException("Category null");
         }
-        if (categoryRepo.findById(c.getId()).isPresent()) {
-            throw new ServiceException("Category ID already exists");
+        if(isSaved(c) || !categoryRepo.findByName(c.getName()).isEmpty()){
+            throw new ServiceException("Category already exists");
         }
-        photoServ.create(c.getImage());
+        c.setImage(photoServ.createIfNotExists(c.getImage()));
         categoryRepo.save(c);
     }
 
@@ -258,6 +258,16 @@ public class CategoryService {
         } else {
             throw new ServiceException("Category not found");
         }
+    }
+    
+    private boolean isSaved(Category c) throws ServiceException{
+        if(c.getId() != null && categoryRepo.findById(c.getId()).isPresent()){
+            if(get(c.getId())!= c){
+                throw new ServiceException("Category ID already exists");
+            }
+            return true;
+        }
+        return false;
     }
 
 }
