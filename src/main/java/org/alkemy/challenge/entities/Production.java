@@ -77,6 +77,10 @@ public abstract class Production {
         this.categories = categories;
     }
 
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
     public Integer getId() {
         return id;
     }

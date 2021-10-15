@@ -23,6 +23,37 @@ public class AnimatedCharacterService {
     private PhotoService photoServ;
 
     @Transactional
+    public AnimatedCharacter forceCreate(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            ac = new AnimatedCharacter();
+        }
+        Photo image = ac.getImage();
+        if (image != null) {
+            if ((photoServ.get(ac.getId()) != image) && !photoServ.get(ac.getId()).equals(image)) {
+                image.setId(null);
+            }
+            ac.setImage(photoServ.create(image));
+        }
+        return acRepo.save(ac);
+    }
+
+    @Transactional
+    public AnimatedCharacter forceCreate(Integer id, AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            ac = new AnimatedCharacter();
+        }
+        Photo image = ac.getImage();
+        if (image != null) {
+            if ((photoServ.get(ac.getId()) != image) && !photoServ.get(ac.getId()).equals(image)) {
+                image.setId(null);
+            }
+            ac.setImage(photoServ.create(image));
+        }
+        ac.setId(id);
+        return acRepo.save(ac);
+    }
+
+    @Transactional
     public AnimatedCharacter create(AnimatedCharacter ac) throws ServiceException {
         if (ac == null) {
             throw new ServiceException("Animated Character null");
@@ -30,7 +61,7 @@ public class AnimatedCharacterService {
         if (ac.getName() == null || ac.getName().isEmpty()) {
             throw new ServiceException("Animated Character name cannot be null");
         }
-        if(ac.getWeight() != null || ac.getWeight() < 0){
+        if (ac.getWeight() != null || ac.getWeight() < 0) {
             throw new ServiceException("Animated Character weight has to be a positive number");
         }
         if (isSaved(ac)) {
@@ -180,7 +211,7 @@ public class AnimatedCharacterService {
 
     @Transactional
     public AnimatedCharacter update(Integer id, Photo image, String name, Integer age, Integer weight, String lore) throws ServiceException {
-        if(id == null){
+        if (id == null) {
             throw new ServiceException("ID cannot be null");
         }
         Optional<AnimatedCharacter> opt = acRepo.findById(id);
@@ -220,8 +251,29 @@ public class AnimatedCharacterService {
     }
 
     @Transactional
+    public void delete(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
+        }
+        Optional<AnimatedCharacter> opt = acRepo.findById(id);
+        if (opt.isPresent()) {
+            acRepo.delete(opt.get());
+        } else {
+            throw new ServiceException("Animated Character not found");
+        }
+    }
+
+    @Transactional
+    public void delete(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            throw new ServiceException("Animated Character cannot be null");
+        }
+        delete(ac.getId());
+    }
+
+    @Transactional
     public void shutDown(Integer id) throws ServiceException {
-        if(id == null){
+        if (id == null) {
             throw new ServiceException("ID cannot be null");
         }
         Optional<AnimatedCharacter> opt = acRepo.findById(id);
@@ -236,7 +288,7 @@ public class AnimatedCharacterService {
 
     @Transactional
     public void reOpen(Integer id) throws ServiceException {
-        if(id == null){
+        if (id == null) {
             throw new ServiceException("ID cannot be null");
         }
         Optional<AnimatedCharacter> opt = acRepo.findById(id);

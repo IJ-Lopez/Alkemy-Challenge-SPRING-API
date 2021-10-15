@@ -57,6 +57,10 @@ public class AnimatedCharacter {
 //        this.associateProductions = productions;
 //    }
 
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    
     public Integer getId() {
         return id;
     }

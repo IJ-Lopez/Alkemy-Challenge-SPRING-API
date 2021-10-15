@@ -11,7 +11,6 @@ import org.alkemy.challenge.entities.Category;
 import org.alkemy.challenge.entities.Film;
 import org.alkemy.challenge.entities.Photo;
 import org.alkemy.challenge.entities.enumerations.Stars;
-import org.alkemy.challenge.repositories.CategoryRepository;
 import org.alkemy.challenge.repositories.FilmRepository;
 import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +31,29 @@ public class FilmService {
 
     @Autowired
     private CategoryService catServ;
+
+    @Transactional
+    public Film forceCreate(Film f) throws ServiceException {
+        if (f == null) {
+            f = new Film();
+        }
+        f.setCast(saveCast(f.getCast()));
+        f.setCategories(saveCategories(f.getCategories()));
+        f.setImage(photoServ.createIfNotExists(f.getImage()));
+        return filmRepo.save(f);
+    }
+
+    @Transactional
+    public Film forceCreate(Integer id, Film f) throws ServiceException {
+        if (f == null) {
+            f = new Film();
+        }
+        f.setCast(saveCast(f.getCast()));
+        f.setCategories(saveCategories(f.getCategories()));
+        f.setImage(photoServ.createIfNotExists(f.getImage()));
+        f.setId(id);
+        return filmRepo.save(f);
+    }
 
     @Transactional
     public Film create(Film f) throws ServiceException {
@@ -210,6 +232,27 @@ public class FilmService {
         } else {
             throw new ServiceException("Film not found");
         }
+    }
+
+    @Transactional
+    public void delete(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
+        }
+        Optional<Film> opt = filmRepo.findById(id);
+        if (opt.isPresent()) {
+            filmRepo.delete(opt.get());
+        } else {
+            throw new ServiceException("Animated Character not found");
+        }
+    }
+
+    @Transactional
+    public void delete(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            throw new ServiceException("Animated Character cannot be null");
+        }
+        delete(ac.getId());
     }
 
     public void addCharacter(int filmId, int characterId) throws ServiceException {
