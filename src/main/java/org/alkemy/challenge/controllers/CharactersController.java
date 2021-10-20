@@ -10,7 +10,6 @@ import org.alkemy.challenge.entities.AnimatedCharacter;
 import org.alkemy.challenge.entities.Photo;
 import org.alkemy.challenge.services.AnimatedCharacterService;
 import org.alkemy.challenge.services.PhotoService;
-import org.alkemy.challenge.services.ProductionService;
 import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,17 +37,38 @@ public class CharactersController {
     @Autowired
     private PhotoService photoServ;
 
-    @Autowired
-    private ProductionService prodServ;
-
     @GetMapping()
-    public List<ListCharacterData> getAll() {
-        List<AnimatedCharacter> characters = acServ.getAll();
-        List<ListCharacterData> response = new ArrayList<>();
-        characters.forEach(c -> {
-            response.add(new ListCharacterData(c));
-        });
-        return response;
+    public ResponseEntity getAll(@RequestParam(required = false) String name, @RequestParam(required = false) Integer age, @RequestParam(required = false) Integer productionId) {
+        try {
+            List<ListCharacterData> response = new ArrayList<>();
+            List<AnimatedCharacter> characters = acServ.getAll();
+            
+            List<AnimatedCharacter> nameCharacters = null;
+            if (name != null) {
+                nameCharacters = acServ.getByNameLike(name);
+            }
+            
+            List<AnimatedCharacter> ageCharacters = null;
+            if (age != null) {
+                ageCharacters = acServ.getByAge(age);
+            }
+            
+            List<AnimatedCharacter> productionCharacters = null;
+            if (productionId != null){
+                productionCharacters = acServ.getByProduction(productionId);
+            }
+            
+            for (AnimatedCharacter c : characters) {
+                if ((nameCharacters == null || nameCharacters.contains(c)) && (ageCharacters == null || ageCharacters.contains(c)) && (productionCharacters == null || productionCharacters.contains(c))) {
+                    response.add(new ListCharacterData(c));
+                }
+            }
+            return new ResponseEntity(response, HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(CharactersController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
     }
 
     @PostMapping(params = {"character"})
@@ -167,6 +187,9 @@ public class CharactersController {
             }
             try {
                 AnimatedCharacter ac = acServ.get(id);
+                if (ac.isDown()) {
+                    return new ResponseEntity("Animated Character is down", HttpStatus.FORBIDDEN);
+                }
                 DetailedCharacterData lcd = new DetailedCharacterData(ac);
                 return new ResponseEntity(lcd, HttpStatus.OK);
             } catch (ServiceException ex) {
@@ -295,7 +318,7 @@ public class CharactersController {
         return forceUpdate(id, ac.getImage(), ac.getName(), ac.getAge(), ac.getWeight(), ac.getLore());
     }
 
-    @PostMapping(path = "/{id}")
+    @PatchMapping(path = "/{id}/state")
     public ResponseEntity changeState(@PathVariable("id") int id) {
         try {
             AnimatedCharacter ac = acServ.get(id);

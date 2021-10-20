@@ -52,7 +52,7 @@ public class MoviesController {
     }
 
     @PostMapping(params = {"title"})
-    public ResponseEntity add(@RequestParam String title, @RequestParam Integer imageId, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
+    public ResponseEntity add(@RequestParam String title, @RequestParam(required = false) Integer imageId, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
             Photo image = null;
             if (imageId != null) {
@@ -144,23 +144,53 @@ public class MoviesController {
     }
 
     @GetMapping()
-    public ResponseEntity getAll() {
-        List<Film> films = filmServ.getAll();
-        List<ListProductionData> response = new ArrayList();
-        films.forEach(f -> {
-            response.add(new ListProductionData(f));
-        });
-        return new ResponseEntity(response, HttpStatus.OK);
+    public ResponseEntity getAll(@RequestParam(required = false) String title, @RequestParam(required = false) Integer genreId, @RequestParam(required = false) String order) {
+        try {
+            List<ListProductionData> response = new ArrayList();
+            
+            List<Film> titledFilm = null;
+            if (title != null) {
+                titledFilm = filmServ.getByNameLike(title);
+            }
+
+            List<Film> genreFilm = null;
+            if (genreId != null) {
+                genreFilm = filmServ.getByCategory(genreId);
+            }
+
+            List<Film> films = filmServ.getAll();
+            for (Film f : films) {
+                if ((titledFilm == null || titledFilm.contains(f)) && (genreFilm == null || genreFilm.contains(f))) {
+                    response.add(new ListProductionData(f));
+                }
+            }
+            System.out.println(order);
+            if (order != null) {
+                if (order.equalsIgnoreCase("asc")) {
+                    response.sort((f1, f2) -> f1.getTitle().compareTo(f2.getTitle()));
+                } else if (order.equalsIgnoreCase("desc")) {
+                    System.out.println("DESCENDING");
+                    response.sort((f1, f2) -> f2.getTitle().compareTo(f1.getTitle()));
+                }
+            }
+            return new ResponseEntity(response, HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping(path = "/{id}")
-    public ResponseEntity get(@PathVariable Integer id) {
+    public ResponseEntity getDetails(@PathVariable Integer id) {
         try {
             if (id == null) {
                 throw new ServiceException("ID cannot be null");
             }
             try {
                 Film film = filmServ.get(id);
+                if (film.isDown()) {
+                    return new ResponseEntity("Film is down", HttpStatus.FORBIDDEN);
+                }
                 return new ResponseEntity(new DetailedProductionData(film), HttpStatus.OK);
             } catch (ServiceException ex) {
                 return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -306,7 +336,7 @@ public class MoviesController {
         }
     }
 
-    @PostMapping(path = "/{id}")
+    @PatchMapping(path = "/{id}/state")
     public ResponseEntity changeState(@PathVariable("id") int id) {
         try {
             Film f = filmServ.get(id);
@@ -317,19 +347,85 @@ public class MoviesController {
             }
             return new ResponseEntity(HttpStatus.OK);
         } catch (ServiceException ex) {
-            Logger.getLogger(CharactersController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
     }
-    
+
     @DeleteMapping(path = "/{id}")
     public ResponseEntity delete(@PathVariable("id") int id) {
         try {
             filmServ.delete(id);
             return new ResponseEntity(HttpStatus.OK);
         } catch (ServiceException ex) {
-            Logger.getLogger(CharactersController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping(path = "/{id}/cast")
+    public ResponseEntity addCharacter(@PathVariable Integer id, @RequestParam Integer characterId) {
+        try {
+            filmServ.addCharacter(id, characterId);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @DeleteMapping(path = "/{id}/cast")
+    public ResponseEntity removeCharacter(@PathVariable Integer id, @RequestParam Integer characterId) {
+        try {
+            filmServ.removeCharacter(id, characterId);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @PostMapping(path = "/{id}/categories", params = {"categoryId"})
+    public ResponseEntity addCategory(@PathVariable Integer id, @RequestParam Integer categoryId) {
+        try {
+            filmServ.addCategory(id, categoryId);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @PostMapping(path = "/{id}/categories", params = {"category"})
+    public ResponseEntity addCategory(@PathVariable Integer id, @RequestParam String category) {
+        try {
+            filmServ.addCategory(id, category);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @DeleteMapping(path = "/{id}/categories", params = {"categoryId"})
+    public ResponseEntity removeCategory(@PathVariable Integer id, @RequestParam Integer categoryId) {
+        try {
+            filmServ.removeCategory(id, categoryId);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @DeleteMapping(path = "/{id}/categories", params = {"category"})
+    public ResponseEntity removeCategory(@PathVariable Integer id, @RequestParam String category) {
+        try {
+            filmServ.removeCategory(id, category);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,13 +26,40 @@ public class ProductionsController {
     private ProductionService prodServ;
     
     @GetMapping()
-    public ResponseEntity getAll(){
-        List<Production> productions = prodServ.getAll();
-        List<ListProductionData> response = new ArrayList();
-        productions.forEach(p -> {
-           response.add(new ListProductionData(p));
-        });
-        return new ResponseEntity(response, HttpStatus.OK);
+    public ResponseEntity getAll(@RequestParam(required = false) String title, @RequestParam(required = false) Integer genreId, @RequestParam(required = false) String order) {
+        try {
+            List<ListProductionData> response = new ArrayList();
+            
+            List<Production> titledProduction = null;
+            if (title != null) {
+                titledProduction = prodServ.getByTitleLike(title);
+            }
+
+            List<Production> genreProduction = null;
+            if (genreId != null) {
+                genreProduction = prodServ.getByCategory(genreId);
+            }
+
+            List<Production> prods = prodServ.getAll();
+            for (Production f : prods) {
+                if ((titledProduction == null || titledProduction.contains(f)) && (genreProduction == null || genreProduction.contains(f))) {
+                    response.add(new ListProductionData(f));
+                }
+            }
+            
+            if (order != null) {
+                if (order.equalsIgnoreCase("asc")) {
+                    response.sort((f1, f2) -> f1.getTitle().compareTo(f2.getTitle()));
+                } else if (order.equalsIgnoreCase("desc")) {
+                    System.out.println("DESCENDING");
+                    response.sort((f1, f2) -> f2.getTitle().compareTo(f1.getTitle()));
+                }
+            }
+            return new ResponseEntity(response, HttpStatus.OK);
+        } catch (ServiceException ex) {
+            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
     
     @GetMapping(path = "/{id}")

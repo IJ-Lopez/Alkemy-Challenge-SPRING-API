@@ -42,12 +42,6 @@ public class Category {
         this.image = image;
     }
 
-//    public Category(String name, Photo image, Set<Production> productions) {
-//        this.name = name;
-//        this.image = image;
-//        this.productions = productions;
-//    }
-
     public Integer getId() {
         return id;
     }

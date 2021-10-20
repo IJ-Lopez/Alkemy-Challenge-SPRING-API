@@ -22,16 +22,33 @@ public class ShowService {
 
     @Autowired
     private ShowRepository showRepo;
-    
+
     @Autowired
     private PhotoService photoServ;
 
     @Autowired
     private AnimatedCharacterService acServ;
-    
+
     @Autowired
     private CategoryService catServ;
-    
+
+    @Transactional
+    public Show forceCreate(Show s) throws ServiceException {
+        if (s == null) {
+            s = new Show();
+        }
+        s.setCast(saveCast(s.getCast()));
+        s.setCategories(saveCategories(s.getCategories()));
+        s.setImage(photoServ.createIfNotExists(s.getImage()));
+        return showRepo.save(s);
+    }
+
+    @Transactional
+    public Show forceCreate(Integer id, Show s) throws ServiceException {
+        s.setId(id);
+        return forceCreate(s);
+    }
+
     @Transactional
     public Show create(Show s) throws ServiceException {
         if (s == null) {
@@ -41,18 +58,18 @@ public class ShowService {
             throw new ServiceException("Show already exists");
         }
         if (s.getTitle() == null || s.getTitle().isEmpty()) {
-            throw new ServiceException("Show movie cannot be null");
+            throw new ServiceException("Show title cannot be null");
         }
-        s.setImage(photoServ.createIfNotExists(s.getImage()));
         s.setCast(saveCast(s.getCast()));
         s.setCategories(saveCategories(s.getCategories()));
+        s.setImage(photoServ.createIfNotExists(s.getImage()));
         return showRepo.save(s);
     }
 
     @Transactional
     public Show create(MultipartFile file, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
         Photo image = null;
-        if(file != null){
+        if (file != null) {
             image = new Photo(file);
         }
         Show s = new Show(image, title, creation, stars, cast, categories);
@@ -67,7 +84,7 @@ public class ShowService {
 
     @Transactional
     public Show createIfNotExists(Show s) throws ServiceException {
-        if(!isSaved(s)){
+        if (!isSaved(s)) {
             s = create(s);
         }
         return s;
@@ -85,8 +102,8 @@ public class ShowService {
 
     @Transactional
     public Show createIfNotExists(Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
-        Show f = new Show(image, title, creation, stars, cast, categories);
-        return createIfNotExists(f);
+        Show s = new Show(image, title, creation, stars, cast, categories);
+        return createIfNotExists(s);
     }
 
     public List<Show> getAll() {
@@ -109,7 +126,7 @@ public class ShowService {
         return showRepo.findByTitleIgnoreCase(title);
     }
 
-    public List<Show> getByNameLike(String title) throws ServiceException {
+    public List<Show> getByTitleLike(String title) throws ServiceException {
         if (title == null) {
             throw new ServiceException("Show title cannot be null");
         }
@@ -139,6 +156,10 @@ public class ShowService {
             throw new ServiceException("Animated Character invalid or null");
         }
         return showRepo.findByCharacterId(c.getId());
+    }
+    
+    public List<Show> getByCategory(int id) {
+        return showRepo.findByCategoryId(id);
     }
 
     @Transactional
@@ -182,7 +203,10 @@ public class ShowService {
     }
 
     @Transactional
-    public void shutDown(int id) throws ServiceException {
+    public void shutDown(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
+        }
         Optional<Show> opt = showRepo.findById(id);
         if (opt.isPresent()) {
             Show s = opt.get();
@@ -194,7 +218,10 @@ public class ShowService {
     }
 
     @Transactional
-    public void reOpen(int id) throws ServiceException {
+    public void reOpen(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
+        }
         Optional<Show> opt = showRepo.findById(id);
         if (opt.isPresent()) {
             Show s = opt.get();
@@ -204,18 +231,124 @@ public class ShowService {
             throw new ServiceException("Show not found");
         }
     }
-    
-    private boolean isSaved(Show s) throws ServiceException{
-        if (s.getId() != null && showRepo.findById(s.getId()).isPresent()) {
-            if (get(s.getId()) != s) {
-                throw new ServiceException("Show ID already exists");
-            }
-            return true;
+
+    @Transactional
+    public void delete(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
         }
-        return false;
+        Optional<Show> opt = showRepo.findById(id);
+        if (opt.isPresent()) {
+            showRepo.delete(opt.get());
+        } else {
+            throw new ServiceException("Show not found");
+        }
     }
-    
-    
+
+    @Transactional
+    public void delete(Show s) throws ServiceException {
+        if (s == null) {
+            throw new ServiceException("Show cannot be null");
+        }
+        delete(s.getId());
+    }
+
+    @Transactional
+    public void addCharacter(int showId, int characterId) throws ServiceException {
+        AnimatedCharacter ac = acServ.get(characterId);
+        Optional<Show> optShow = showRepo.findById(showId);
+        if (optShow.isPresent()) {
+            Show show = optShow.get();
+            if (show.getCast().add(ac)) {
+                throw new ServiceException("Animated Character was already part of the cast");
+            }
+            showRepo.save(show);
+        } else {
+            throw new ServiceException("Show not found");
+        }
+    }
+
+    @Transactional
+    public void removeCharacter(int showId, int characterId) throws ServiceException {
+        AnimatedCharacter ac = acServ.get(characterId);
+        Optional<Show> optShow = showRepo.findById(showId);
+        if (optShow.isPresent()) {
+            Show show = optShow.get();
+            if (!show.getCast().remove(ac)) {
+                throw new ServiceException("Animated Character was not part of the cast");
+            }
+            showRepo.save(show);
+        } else {
+            throw new ServiceException("Show not found");
+        }
+    }
+
+    @Transactional
+    public void addCategory(int showId, int categoryId) throws ServiceException {
+        Category c = catServ.get(categoryId);
+        Optional<Show> optShow = showRepo.findById(showId);
+        if (optShow.isPresent()) {
+            Show show = optShow.get();
+            if (!show.getCategories().add(c)) {
+                throw new ServiceException("Category was already part of the cast");
+            }
+            showRepo.save(show);
+        } else {
+            throw new ServiceException("Show not found");
+        }
+    }
+
+    @Transactional
+    public void addCategory(int showId, String category) throws ServiceException {
+        List<Category> dbCategories = catServ.getByName(category);
+        Category c = !dbCategories.isEmpty() ? dbCategories.get(0) : new Category(category, null);
+        Optional<Show> optShow = showRepo.findById(showId);
+        if (optShow.isPresent()) {
+            Show show = optShow.get();
+            if (!show.getCategories().add(c)) {
+                throw new ServiceException("Category was already part of the cast");
+            }
+            showRepo.save(show);
+        } else {
+            throw new ServiceException("Show not found");
+        }
+    }
+
+    @Transactional
+    public void removeCategory(int showId, int categoryId) throws ServiceException {
+        Category c = catServ.get(categoryId);
+        Optional<Show> optShow = showRepo.findById(showId);
+        if (optShow.isPresent()) {
+            Show show = optShow.get();
+            if (!show.getCategories().remove(c)) {
+                throw new ServiceException("Category was not part of the cast");
+            }
+            showRepo.save(show);
+        } else {
+            throw new ServiceException("Show not found");
+        }
+    }
+
+    @Transactional
+    public void removeCategory(int showId, String category) throws ServiceException {
+        List<Category> dbCategories = catServ.getByName(category);
+        if(dbCategories.isEmpty()){
+            throw new ServiceException("Category does not exists");
+        }
+        Category c = dbCategories.get(0);
+        Optional<Show> optShow = showRepo.findById(showId);
+        if (optShow.isPresent()) {
+            Show show = optShow.get();
+            if (!show.getCategories().remove(c)) {
+                throw new ServiceException("Category was not part of the cast");
+            }
+            showRepo.save(show);
+        } else {
+            throw new ServiceException("Show not found");
+        }
+    }
+
+    @Transactional
     private Set<AnimatedCharacter> saveCast(Set<AnimatedCharacter> cast) throws ServiceException {
         if (cast != null && cast.isEmpty()) {
             Set<AnimatedCharacter> savedCast = new HashSet();
@@ -229,6 +362,7 @@ public class ShowService {
         return cast;
     }
 
+    @Transactional
     private Set<Category> saveCategories(Set<Category> categories) throws ServiceException {
         if (categories != null && categories.isEmpty()) {
             Set<Category> savedCategories = new HashSet();
@@ -240,5 +374,15 @@ public class ShowService {
             return savedCategories;
         }
         return categories;
+    }
+
+    private boolean isSaved(Show s) throws ServiceException {
+        if (s.getId() != null && showRepo.findById(s.getId()).isPresent()) {
+            if (get(s.getId()) != s) {
+                throw new ServiceException("Show ID already exists");
+            }
+            return true;
+        }
+        return false;
     }
 }

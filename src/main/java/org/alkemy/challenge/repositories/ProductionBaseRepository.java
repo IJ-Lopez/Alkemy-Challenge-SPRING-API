@@ -1,14 +1,21 @@
 package org.alkemy.challenge.repositories;
 
 import java.util.List;
+import javax.transaction.Transactional;
 import org.alkemy.challenge.entities.Production;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.query.Param;
 
 @NoRepositoryBean
 public interface ProductionBaseRepository<T extends Production> extends JpaRepository<T, Integer>{
+    
+    @Modifying
+    @Query(value = "INSERT INTO Production (id) VALUES (:id)", nativeQuery = true)
+    @Transactional
+    void put(@Param("id") Integer id);
     
     List<T> findByTitle(String title);
     

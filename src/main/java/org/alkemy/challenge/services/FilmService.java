@@ -40,19 +40,16 @@ public class FilmService {
         f.setCast(saveCast(f.getCast()));
         f.setCategories(saveCategories(f.getCategories()));
         f.setImage(photoServ.createIfNotExists(f.getImage()));
+        if(f.getId() != null){
+            filmRepo.put(f.getId());
+        }
         return filmRepo.save(f);
     }
 
     @Transactional
     public Film forceCreate(Integer id, Film f) throws ServiceException {
-        if (f == null) {
-            f = new Film();
-        }
-        f.setCast(saveCast(f.getCast()));
-        f.setCategories(saveCategories(f.getCategories()));
-        f.setImage(photoServ.createIfNotExists(f.getImage()));
         f.setId(id);
-        return filmRepo.save(f);
+        return forceCreate(f);
     }
 
     @Transactional
@@ -64,7 +61,7 @@ public class FilmService {
             throw new ServiceException("Film already exists");
         }
         if (f.getTitle() == null || f.getTitle().isEmpty()) {
-            throw new ServiceException("Film movie cannot be null");
+            throw new ServiceException("Film title cannot be null");
         }
         f.setCast(saveCast(f.getCast()));
         f.setCategories(saveCategories(f.getCategories()));
@@ -164,6 +161,10 @@ public class FilmService {
         return filmRepo.findByCharacterId(c.getId());
     }
 
+    public List<Film> getByCategory(int id) {
+        return filmRepo.findByCategoryId(id);
+    }
+
     @Transactional
     public Film update(Integer id, Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) throws ServiceException {
         if (id == null) {
@@ -243,33 +244,115 @@ public class FilmService {
         if (opt.isPresent()) {
             filmRepo.delete(opt.get());
         } else {
-            throw new ServiceException("Animated Character not found");
+            throw new ServiceException("Film not found");
         }
     }
 
     @Transactional
-    public void delete(AnimatedCharacter ac) throws ServiceException {
-        if (ac == null) {
-            throw new ServiceException("Animated Character cannot be null");
+    public void delete(Film f) throws ServiceException {
+        if (f == null) {
+            throw new ServiceException("Film cannot be null");
         }
-        delete(ac.getId());
+        delete(f.getId());
     }
 
+    @Transactional
     public void addCharacter(int filmId, int characterId) throws ServiceException {
-        Optional<Film> opt = filmRepo.findById(filmId);
-        //TERMINAR PARA AÑADIR UN PERSONAJE A LA MUVI
-    }
-
-    private boolean isSaved(Film f) throws ServiceException {
-        if (f.getId() != null && filmRepo.findById(f.getId()).isPresent()) {
-            if (get(f.getId()) != f) {
-                throw new ServiceException("Film ID already exists");
+        AnimatedCharacter ac = acServ.get(characterId);
+        Optional<Film> optFilm = filmRepo.findById(filmId);
+        if (optFilm.isPresent()) {
+            Film film = optFilm.get();
+            if(!film.getCast().add(ac)){
+                throw new ServiceException("Animated Character was already part of the cast");
             }
-            return true;
+            filmRepo.save(film);
+        } else {
+            throw new ServiceException("Film not found");
         }
-        return false;
+    }
+    
+    @Transactional
+    public void removeCharacter(int filmId, int characterId) throws ServiceException {
+        AnimatedCharacter ac = acServ.get(characterId);
+        Optional<Film> optFilm = filmRepo.findById(filmId);
+        if (optFilm.isPresent()) {
+            Film film = optFilm.get();
+            if(!film.getCast().remove(ac)){
+                throw new ServiceException("Animated Character was not part of the cast");
+            }
+            filmRepo.save(film);
+        } else {
+            throw new ServiceException("Film not found");
+        }
     }
 
+    @Transactional
+    public void addCategory(int filmId, int categoryId) throws ServiceException {
+        Category c = catServ.get(categoryId);
+        Optional<Film> optFilm = filmRepo.findById(filmId);
+        if (optFilm.isPresent()) {
+            Film film = optFilm.get();
+            if(!film.getCategories().add(c)){
+                throw new ServiceException("Category was already part of the cast");
+            }
+            filmRepo.save(film);
+        } else {
+            throw new ServiceException("Film not found");
+        }
+    }
+    
+    @Transactional
+    public void addCategory(int filmId, String category) throws ServiceException {
+        List<Category> dbCategories = catServ.getByName(category);
+        Category c = !dbCategories.isEmpty() ? dbCategories.get(0) : new Category(category, null);
+        Optional<Film> optFilm = filmRepo.findById(filmId);
+        if (optFilm.isPresent()) {
+            Film film = optFilm.get();
+            if (!film.getCategories().add(c)) {
+                throw new ServiceException("Category was already part of the cast");
+            }
+            filmRepo.save(film);
+        } else {
+            throw new ServiceException("Film not found");
+        }
+    }
+    
+    @Transactional
+    public void removeCategory(int filmId, int categoryId) throws ServiceException {
+        Category c = catServ.get(categoryId);
+        Optional<Film> optFilm = filmRepo.findById(filmId);
+        if (optFilm.isPresent()) {
+            Film film = optFilm.get();
+            if(!film.getCategories().remove(c)){
+                throw new ServiceException("Category was not part of the cast");
+            }
+            filmRepo.save(film);
+        } else {
+            throw new ServiceException("Film not found");
+        }
+    }
+    
+    @Transactional
+    public void removeCategory(int filmId, String category) throws ServiceException {
+        List<Category> dbCategories = catServ.getByName(category);
+        if(dbCategories.isEmpty()){
+            throw new ServiceException("Category does not exists");
+        }
+        Category c = dbCategories.get(0);
+        Optional<Film> optFilm = filmRepo.findById(filmId);
+        if (optFilm.isPresent()) {
+            Film film = optFilm.get();
+            if (!film.getCategories().remove(c)) {
+                throw new ServiceException("Category was not part of the cast");
+            }
+            filmRepo.save(film);
+        } else {
+            throw new ServiceException("Film not found");
+        }
+    }
+
+
+    @Transactional
     private Set<AnimatedCharacter> saveCast(Set<AnimatedCharacter> cast) throws ServiceException {
         if (cast != null && cast.isEmpty()) {
             Set<AnimatedCharacter> savedCast = new HashSet();
@@ -283,6 +366,7 @@ public class FilmService {
         return cast;
     }
 
+    @Transactional
     private Set<Category> saveCategories(Set<Category> categories) throws ServiceException {
         if (categories != null && categories.isEmpty()) {
             Set<Category> savedCategories = new HashSet();
@@ -294,5 +378,15 @@ public class FilmService {
             return savedCategories;
         }
         return categories;
+    }
+
+    private boolean isSaved(Film f) throws ServiceException {
+        if (f.getId() != null && filmRepo.findById(f.getId()).isPresent()) {
+            if (get(f.getId()) != f) {
+                throw new ServiceException("Film ID already exists");
+            }
+            return true;
+        }
+        return false;
     }
 }

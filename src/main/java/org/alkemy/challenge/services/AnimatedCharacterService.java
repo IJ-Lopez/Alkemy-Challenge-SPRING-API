@@ -34,23 +34,16 @@ public class AnimatedCharacterService {
             }
             ac.setImage(photoServ.create(image));
         }
+        if(ac.getId() != null){
+            acRepo.put(ac.getId());
+        }
         return acRepo.save(ac);
     }
 
     @Transactional
     public AnimatedCharacter forceCreate(Integer id, AnimatedCharacter ac) throws ServiceException {
-        if (ac == null) {
-            ac = new AnimatedCharacter();
-        }
-        Photo image = ac.getImage();
-        if (image != null) {
-            if ((photoServ.get(ac.getId()) != image) && !photoServ.get(ac.getId()).equals(image)) {
-                image.setId(null);
-            }
-            ac.setImage(photoServ.create(image));
-        }
         ac.setId(id);
-        return acRepo.save(ac);
+        return forceCreate(ac);
     }
 
     @Transactional
@@ -145,6 +138,14 @@ public class AnimatedCharacterService {
             throw new ServiceException("Animated Character name cannot be null");
         }
         List<AnimatedCharacter> characters = acRepo.findByNameContainingIgnoreCase(name);
+        return characters;
+    }
+    
+    public List<AnimatedCharacter> getByAge(Integer age) throws ServiceException {
+        if (age == null) {
+            throw new ServiceException("Animated Character name cannot be null");
+        }
+        List<AnimatedCharacter> characters = acRepo.findByAge(age);
         return characters;
     }
 
