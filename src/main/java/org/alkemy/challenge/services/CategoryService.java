@@ -3,7 +3,6 @@ package org.alkemy.challenge.services;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import javax.transaction.Transactional;
 import org.alkemy.challenge.entities.Category;
 import org.alkemy.challenge.entities.Photo;

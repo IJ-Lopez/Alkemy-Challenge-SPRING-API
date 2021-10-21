@@ -1,7 +1,6 @@
 package org.alkemy.challenge.repositories;
 
 import java.util.List;
-import java.util.Set;
 import javax.transaction.Transactional;
 import org.alkemy.challenge.entities.AnimatedCharacter;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -18,7 +18,7 @@ public class PhotoService {
 
     @Transactional
     public Photo create(Photo photo) throws ServiceException {
-        if (validation(photo)) {
+        if (isValid(photo)) {
             return photoRepo.save(photo);
         }
         throw new ServiceException("Photo already exists");
@@ -33,7 +33,7 @@ public class PhotoService {
     @Transactional
     public Photo createIfNotExists(Photo photo) throws ServiceException {
         if (photo != null) {
-            if (validation(photo)) {
+            if (isValid(photo)) {
                 return photoRepo.save(photo);
             }
         }
@@ -78,7 +78,7 @@ public class PhotoService {
         if (id == null) {
             throw new ServiceException("ID cannot be null");
         }
-        validation(updatedPhoto);
+        isValid(updatedPhoto);
         Optional<Photo> opt = photoRepo.findById(id);
         if (opt.isPresent()) {
             Photo photo = opt.get();
@@ -111,7 +111,7 @@ public class PhotoService {
         return update(updatedPhoto.getId(), updatedPhoto);
     }
 
-    private boolean validation(Photo photo) throws ServiceException {
+    private boolean isValid(Photo photo) throws ServiceException {
         if (photo == null) {
             throw new ServiceException("Photo cannot be null");
         }

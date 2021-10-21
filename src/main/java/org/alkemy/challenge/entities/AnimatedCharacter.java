@@ -48,15 +48,6 @@ public class AnimatedCharacter {
         this.lore = lore;
     }
 
-//    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore, Set<Production> productions) {
-//        this.image = image;
-//        this.name = name;
-//        this.age = age;
-//        this.weight = weight;
-//        this.lore = lore;
-//        this.associateProductions = productions;
-//    }
-
     public void setId(Integer id) {
         this.id = id;
     }
