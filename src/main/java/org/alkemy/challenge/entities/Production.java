@@ -1,8 +1,11 @@
 package org.alkemy.challenge.entities;
 
-import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
@@ -32,14 +35,19 @@ public abstract class Production {
     private Integer id;
 
     @OneToOne
+    @JsonProperty("image")
     private Photo image;
 
+    @JsonProperty("title")
     private String title;
 
-    @Temporal(value = TemporalType.TIMESTAMP)
+    @Temporal(value = TemporalType.DATE)
+    @JsonProperty("creation")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date creation;
 
     @Enumerated(EnumType.ORDINAL)
+    @JsonProperty("stars")
     private Stars stars;
 
     @ManyToMany
@@ -48,10 +56,17 @@ public abstract class Production {
             joinColumns = @JoinColumn(name = "PRODUCTION_ID", referencedColumnName = "ID"),
             inverseJoinColumns = @JoinColumn(name = "ANIMATEDCHARACTER_ID", referencedColumnName = "ID")
     )
-    private List<AnimatedCharacter> cast  = new ArrayList();
+    @JsonProperty("cast")
+    private Set<AnimatedCharacter> cast  = new HashSet();
 
-    @ManyToMany(mappedBy = "productions")
-    private List<Category> categories  = new ArrayList();
+    @ManyToMany
+    @JoinTable(
+            name = "PRODUCTION_CATEGORY",
+            joinColumns = @JoinColumn(name = "CATEGORY_ID", referencedColumnName = "ID"),
+            inverseJoinColumns = @JoinColumn(name = "PRODUCTION_ID", referencedColumnName = "ID")
+    )
+    @JsonProperty("categories")
+    private Set<Category> categories  = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date upload = new Date();
@@ -62,13 +77,17 @@ public abstract class Production {
     public Production() {
     }
 
-    public Production(Photo image, String title, Date creation, Stars stars, List<AnimatedCharacter> cast, List<Category> categories) {
+    public Production(Photo image, String title, Date creation, Stars stars, Set<AnimatedCharacter> cast, Set<Category> categories) {
         this.image = image;
         this.title = title;
         this.creation = creation;
         this.stars = stars;
         this.cast = cast;
         this.categories = categories;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public Integer getId() {
@@ -107,19 +126,19 @@ public abstract class Production {
         this.stars = stars;
     }
 
-    public List<AnimatedCharacter> getCast() {
+    public Set<AnimatedCharacter> getCast() {
         return cast;
     }
 
-    public void setCast(List<AnimatedCharacter> cast) {
+    public void setCast(Set<AnimatedCharacter> cast) {
         this.cast = cast;
     }
 
-    public List<Category> getCategories() {
+    public Set<Category> getCategories() {
         return categories;
     }
 
-    public void setCategories(List<Category> categories) {
+    public void setCategories(Set<Category> categories) {
         this.categories = categories;
     }
     
@@ -142,5 +161,64 @@ public abstract class Production {
     public void setShutdown(Date shutdown) {
         this.shutdown = shutdown;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + Objects.hashCode(this.id);
+        hash = 67 * hash + Objects.hashCode(this.image);
+        hash = 67 * hash + Objects.hashCode(this.title);
+        hash = 67 * hash + Objects.hashCode(this.creation);
+        hash = 67 * hash + Objects.hashCode(this.stars);
+        hash = 67 * hash + Objects.hashCode(this.cast);
+        hash = 67 * hash + Objects.hashCode(this.categories);
+        hash = 67 * hash + Objects.hashCode(this.upload);
+        hash = 67 * hash + Objects.hashCode(this.shutdown);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Production other = (Production) obj;
+        if (!Objects.equals(this.title, other.title)) {
+            return false;
+        }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        if (!Objects.equals(this.image, other.image)) {
+            return false;
+        }
+        if (!Objects.equals(this.creation, other.creation)) {
+            return false;
+        }
+        if (this.stars != other.stars) {
+            return false;
+        }
+        if (!Objects.equals(this.cast, other.cast)) {
+            return false;
+        }
+        if (!Objects.equals(this.categories, other.categories)) {
+            return false;
+        }
+        if (!Objects.equals(this.upload, other.upload)) {
+            return false;
+        }
+        if (!Objects.equals(this.shutdown, other.shutdown)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 
 }

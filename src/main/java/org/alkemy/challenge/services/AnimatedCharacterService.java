@@ -1,9 +1,7 @@
 package org.alkemy.challenge.services;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import javax.transaction.Transactional;
 import org.alkemy.challenge.entities.AnimatedCharacter;
@@ -13,7 +11,6 @@ import org.alkemy.challenge.repositories.AnimatedCharacterRepository;
 import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.alkemy.challenge.repositories.ProductionRepository;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -23,77 +20,100 @@ public class AnimatedCharacterService {
     private AnimatedCharacterRepository acRepo;
 
     @Autowired
-    private ProductionRepository prodRepo;
-
-    @Autowired
     private PhotoService photoServ;
 
     @Transactional
-    public void create(AnimatedCharacter ac) throws ServiceException {
-        if (ac == null || ac.getId() == null) {
-            throw new ServiceException("Animated Character null or has no ID");
-        }
-        if (acRepo.findById(ac.getId()).isPresent()) {
-            throw new ServiceException("Animated Character ID already exists");
+    public AnimatedCharacter forceCreate(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            ac = new AnimatedCharacter();
         }
         Photo image = ac.getImage();
         if (image != null) {
-            if (image.getId() == null) {
-                throw new ServiceException("Photo ID cannot be null");
+            if ((photoServ.get(ac.getId()) != image) && !photoServ.get(ac.getId()).equals(image)) {
+                image.setId(null);
             }
-            if (photoServ.get(image.getId()) == null) {
-                photoServ.create(image);
-            } else if (photoServ.get(image.getId()) != image) {
-                throw new ServiceException("Photo ID already exists");
-            }
+            ac.setImage(photoServ.create(image));
         }
-        acRepo.save(ac);
+        if(ac.getId() != null){
+            acRepo.put(ac.getId());
+        }
+        return acRepo.save(ac);
     }
 
     @Transactional
-    public void create(MultipartFile file, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Name cannot be null");
-        }
-        if (lore == null) {
-            System.out.printf("%s lore is null. It will be replaced with an empty String%n", name);
-            lore = "";
-        }
-        if (productions == null) {
-            System.out.printf("%s productions are null. They will be replaced with an empty List%n", name);
-            productions = new ArrayList();
-        }
-        Photo image = new Photo(file);
-        photoServ.create(image);
-        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore, productions);
-        acRepo.save(ac);
+    public AnimatedCharacter forceCreate(Integer id, AnimatedCharacter ac) throws ServiceException {
+        ac.setId(id);
+        return forceCreate(ac);
     }
 
     @Transactional
-    public void create(Photo image, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Name cannot be null");
+    public AnimatedCharacter create(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            throw new ServiceException("Animated Character null");
         }
-        if (lore == null) {
-            System.out.printf("%s lore is null. It will be replaced with an empty String%n", name);
-            lore = "";
+        if (ac.getName() == null || ac.getName().isEmpty()) {
+            throw new ServiceException("Animated Character name cannot be null");
         }
-        if (productions == null) {
-            System.out.printf("%s productions are null. They will be replaced with an empty List%n", name);
-            productions = new ArrayList();
+        if (ac.getWeight() != null && ac.getWeight() < 0) {
+            throw new ServiceException("Animated Character weight has to be a positive number");
         }
+        if (ac.getAge() != null && ac.getAge() < 0) {
+            throw new ServiceException("Animated Character weight has to be a positive number");
+        }
+        if (isSaved(ac)) {
+            throw new ServiceException("Animated Character already exists");
+        }
+        Photo image = ac.getImage();
         if (image != null) {
-            if (image.getId() == null) {
-                throw new ServiceException("Photo ID cannot be null");
-            }
-            if (photoServ.get(image.getId()) == null) {
-                photoServ.create(image);
-            } else if (photoServ.get(image.getId()) != image) {
+            if (ac.getId() == null) {
+                ac.setImage(photoServ.create(image));
+            } else if ((photoServ.get(ac.getId()) != image) && !photoServ.get(ac.getId()).equals(image)) {
                 throw new ServiceException("Photo ID already exists");
             }
         }
-        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore, productions);
-        acRepo.save(ac);
+        ac.setAssociateProductions(null);
+        ac.setUpload(new Date());
+        return acRepo.save(ac);
+    }
+
+    @Transactional
+    public AnimatedCharacter create(MultipartFile file, String name, Integer age, Integer weight, String lore) throws ServiceException {
+        Photo image = null;
+        if (file != null) {
+            image = new Photo(file);
+        }
+        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore);
+        return create(ac);
+    }
+
+    @Transactional
+    public AnimatedCharacter create(Photo image, String name, Integer age, Integer weight, String lore) throws ServiceException {
+        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore);
+        return create(ac);
+    }
+
+    @Transactional
+    public AnimatedCharacter createIfNotExists(AnimatedCharacter ac) throws ServiceException {
+        if (!isSaved(ac)) {
+            ac = create(ac);
+        }
+        return ac;
+    }
+
+    @Transactional
+    public AnimatedCharacter createIfNotExists(MultipartFile file, String name, Integer age, Integer weight, String lore) throws ServiceException {
+        Photo image = null;
+        if (file != null) {
+            image = new Photo(file);
+        }
+        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore);
+        return createIfNotExists(ac);
+    }
+
+    @Transactional
+    public AnimatedCharacter createIfNotExists(Photo image, String name, Integer age, Integer weight, String lore) throws ServiceException {
+        AnimatedCharacter ac = new AnimatedCharacter(image, name, age, weight, lore);
+        return createIfNotExists(ac);
     }
 
     public List<AnimatedCharacter> getAll() {
@@ -122,6 +142,14 @@ public class AnimatedCharacterService {
             throw new ServiceException("Animated Character name cannot be null");
         }
         List<AnimatedCharacter> characters = acRepo.findByNameContainingIgnoreCase(name);
+        return characters;
+    }
+    
+    public List<AnimatedCharacter> getByAge(Integer age) throws ServiceException {
+        if (age == null) {
+            throw new ServiceException("Animated Character name cannot be null");
+        }
+        List<AnimatedCharacter> characters = acRepo.findByAge(age);
         return characters;
     }
 
@@ -187,9 +215,9 @@ public class AnimatedCharacterService {
     }
 
     @Transactional
-    public void update(int id, MultipartFile file, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Animated Character name cannot be null");
+    public AnimatedCharacter update(Integer id, Photo image, String name, Integer age, Integer weight, String lore) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
         }
         Optional<AnimatedCharacter> opt = acRepo.findById(id);
         if (opt.isPresent()) {
@@ -198,171 +226,61 @@ public class AnimatedCharacterService {
             ac.setAge(age);
             ac.setWeight(weight);
             ac.setLore(lore);
-
-            Photo image = new Photo(file);
-            photoServ.checkPhoto(image);
-            ac.setImage(image);
-
-            List<Production> prevProductions = ac.getAssociateProductions();
-            if (!Objects.equals(productions, prevProductions)) {
-                if (productions == null) {
-                    prevProductions.forEach(p -> {
-                        p.getCast().remove(ac);
-                    });
-                    prodRepo.saveAll(prevProductions);
-
-                } else {
-                    prevProductions.forEach(p -> {
-                        if (!productions.contains(p)) {
-                            p.getCast().remove(ac);
-                            prodRepo.save(p);
-                        }
-                    });
-                }
-                ac.setAssociateProductions(productions);
-
-            }
-            acRepo.save(ac);
+            ac.setImage(photoServ.createIfNotExists(image));
+            ac.setAssociateProductions(null);
+            return acRepo.save(ac);
         } else {
             throw new ServiceException("Animated Character not found");
         }
     }
 
     @Transactional
-    public void update(int id, Photo image, String name, int age, int weight, String lore, List<Production> productions) throws ServiceException {
-        if (name == null) {
-            throw new ServiceException("Animated Character name cannot be null");
+    public AnimatedCharacter update(Integer id, MultipartFile file, String name, Integer age, Integer weight, String lore) throws ServiceException {
+        return update(id, new Photo(file), name, age, weight, lore);
+    }
+
+    @Transactional
+    public AnimatedCharacter update(Integer id, AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            throw new ServiceException("Animated Character cannot be null");
+        }
+        return update(id, ac.getImage(), ac.getName(), ac.getAge(), ac.getWeight(), ac.getLore());
+    }
+
+    @Transactional
+    public AnimatedCharacter update(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
+            throw new ServiceException("Animated Character cannot be null");
+        }
+        return update(ac.getId(), ac.getImage(), ac.getName(), ac.getAge(), ac.getWeight(), ac.getLore());
+    }
+
+    @Transactional
+    public void delete(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
         }
         Optional<AnimatedCharacter> opt = acRepo.findById(id);
         if (opt.isPresent()) {
-            AnimatedCharacter ac = opt.get();
-            ac.setName(name);
-            ac.setAge(age);
-            ac.setWeight(weight);
-            ac.setLore(lore);
-
-            photoServ.checkPhoto(image);
-            ac.setImage(image);
-
-            List<Production> prevProductions = ac.getAssociateProductions();
-            if (!Objects.equals(productions, prevProductions)) {
-                if (productions == null) {
-                    prevProductions.forEach(p -> {
-                        p.getCast().remove(ac);
-                    });
-                    prodRepo.saveAll(prevProductions);
-
-                } else {
-                    prevProductions.forEach(p -> {
-                        if (!productions.contains(p)) {
-                            p.getCast().remove(ac);
-                            prodRepo.save(p);
-                        }
-                    });
-                }
-                ac.setAssociateProductions(productions);
-
-            }
-            acRepo.save(ac);
+            acRepo.delete(opt.get());
         } else {
             throw new ServiceException("Animated Character not found");
         }
     }
 
     @Transactional
-    public void update(int id, AnimatedCharacter updatedCharacter) throws ServiceException {
-        if (updatedCharacter == null) {
+    public void delete(AnimatedCharacter ac) throws ServiceException {
+        if (ac == null) {
             throw new ServiceException("Animated Character cannot be null");
         }
-        if (updatedCharacter.getName() == null) {
-            throw new ServiceException("Animated Character name cannot be null");
-        }
-        Optional<AnimatedCharacter> opt = acRepo.findById(id);
-        if (opt.isPresent()) {
-            AnimatedCharacter ac = opt.get();
-            ac.setName(updatedCharacter.getName());
-            ac.setAge(updatedCharacter.getAge());
-            ac.setWeight(updatedCharacter.getWeight());
-            ac.setLore(updatedCharacter.getLore());
-
-            Photo image = updatedCharacter.getImage();
-            photoServ.checkPhoto(image);
-            ac.setImage(updatedCharacter.getImage());
-
-            List<Production> prevProductions = ac.getAssociateProductions();
-            if (!Objects.equals(updatedCharacter.getAssociateProductions(), prevProductions)) {
-                if (updatedCharacter.getAssociateProductions() == null) {
-                    prevProductions.forEach(p -> {
-                        p.getCast().remove(ac);
-                    });
-                    prodRepo.saveAll(prevProductions);
-
-                } else {
-                    prevProductions.forEach(p -> {
-                        if (!updatedCharacter.getAssociateProductions().contains(p)) {
-                            p.getCast().remove(ac);
-                            prodRepo.save(p);
-                        }
-                    });
-                }
-                ac.setAssociateProductions(updatedCharacter.getAssociateProductions());
-            }
-            acRepo.save(ac);
-        } else {
-            throw new ServiceException("Animated Character not found");
-        }
+        delete(ac.getId());
     }
 
     @Transactional
-    public void update(AnimatedCharacter updatedCharacter) throws ServiceException {
-        if (updatedCharacter == null) {
-            throw new ServiceException("Animated Character cannot be null");
+    public void shutDown(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
         }
-        if (updatedCharacter.getId() == null) {
-            throw new ServiceException("Animated Character ID cannot be null");
-        }
-        if (updatedCharacter.getName() == null) {
-            throw new ServiceException("Animated Character name cannot be null");
-        }
-        Optional<AnimatedCharacter> opt = acRepo.findById(updatedCharacter.getId());
-        if (opt.isPresent()) {
-            AnimatedCharacter ac = opt.get();
-            ac.setName(updatedCharacter.getName());
-            ac.setAge(updatedCharacter.getAge());
-            ac.setWeight(updatedCharacter.getWeight());
-            ac.setLore(updatedCharacter.getLore());
-
-            Photo image = updatedCharacter.getImage();
-            photoServ.checkPhoto(image);
-            ac.setImage(image);
-
-            List<Production> prevProductions = ac.getAssociateProductions(); 
-            if (!Objects.equals(updatedCharacter.getAssociateProductions(), prevProductions)) {
-                if (updatedCharacter.getAssociateProductions() == null) {
-                    prevProductions.forEach(p -> {
-                        p.getCast().remove(ac);
-                    });
-                    prodRepo.saveAll(prevProductions);
-
-                } else {
-                    prevProductions.forEach(p -> {
-                        if (!updatedCharacter.getAssociateProductions().contains(p)) {
-                            p.getCast().remove(ac);
-                            prodRepo.save(p);
-                        }
-                    });
-
-                }
-                ac.setAssociateProductions(updatedCharacter.getAssociateProductions());
-            }
-            acRepo.save(ac);
-        } else {
-            throw new ServiceException("Animated Character not found");
-        }
-    }
-
-    @Transactional
-    public void shutDown(int id) throws ServiceException {
         Optional<AnimatedCharacter> opt = acRepo.findById(id);
         if (opt.isPresent()) {
             AnimatedCharacter ac = opt.get();
@@ -374,7 +292,10 @@ public class AnimatedCharacterService {
     }
 
     @Transactional
-    public void reOpen(int id) throws ServiceException {
+    public void reOpen(Integer id) throws ServiceException {
+        if (id == null) {
+            throw new ServiceException("ID cannot be null");
+        }
         Optional<AnimatedCharacter> opt = acRepo.findById(id);
         if (opt.isPresent()) {
             AnimatedCharacter ac = opt.get();
@@ -383,6 +304,16 @@ public class AnimatedCharacterService {
         } else {
             throw new ServiceException("Animated Character not found");
         }
+    }
+
+    boolean isSaved(AnimatedCharacter ac) throws ServiceException {
+        if (ac.getId() != null && acRepo.findById(ac.getId()).isPresent()) {
+            if (get(ac.getId()) != ac) {
+                throw new ServiceException("Animated Character ID already exists");
+            }
+            return true;
+        }
+        return false;
     }
 
 }

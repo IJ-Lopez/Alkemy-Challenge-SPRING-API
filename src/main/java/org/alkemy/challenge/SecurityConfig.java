@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.alkemy.challenge;
 
 import org.alkemy.challenge.services.DisneyUserService;
@@ -42,7 +37,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         .loginProcessingUrl("/auth/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/characters")
+                        .defaultSuccessUrl("/auth/success")
+                        .failureUrl("/auth/error")
                         .permitAll()
                     .and().logout()
                     .logoutUrl("/auth/logout")

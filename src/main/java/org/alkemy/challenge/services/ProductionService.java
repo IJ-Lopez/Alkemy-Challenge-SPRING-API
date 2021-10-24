@@ -18,12 +18,33 @@ public class ProductionService {
         return productionRepo.findAll();
     }
 
-    public Production getById(int id) throws ServiceException {
+    public Production get(int id) throws ServiceException {
         Optional<Production> opt = productionRepo.findById(id);
         if (opt.isPresent()) {
             return opt.get();
         } else {
             throw new ServiceException("Production not found");
         }
+    }
+    
+    public List<Production> getByTitle(String title) throws ServiceException {
+        if (title == null) {
+            throw new ServiceException("Production title cannot be null");
+        }
+        return productionRepo.findByTitleIgnoreCase(title);
+    }
+
+    public List<Production> getByTitleLike(String title) throws ServiceException {
+        if (title == null) {
+            throw new ServiceException("Production title cannot be null");
+        }
+        return productionRepo.findByTitleContainingIgnoreCase(title);
+    }
+    
+    public List<Production> getByCategory(Integer id) throws ServiceException{
+        if(id == null){
+            throw new ServiceException("ID cannot be null");
+        }
+        return productionRepo.findByCategoryId(id);
     }
 }

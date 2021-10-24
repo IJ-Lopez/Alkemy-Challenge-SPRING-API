@@ -9,8 +9,8 @@ spring:
                 starttls:
                     required: true
                     enable: true
-    username: ElNahuel2003@gmail.com
-    password: miclavenahuelmdq
+    username: testinguser2906@gmail.com
+    password: orjxfrozmnbyjpnc
   datasource: 
     url: jdbc:mysql://localhost:3306/disney?allowPublicKeyRetrieval=true&useSSL=false&useTimezone=true&serverTimezone=GMT&characterEncoding=UTF-8
     username: root
@@ -23,12 +23,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL5InnoDBDialect      
-  thymeleaf:
-    cache: false
-#  security:
-#      user:
-#          name: user
-#          password: alkemy
 server:
   error:
     whitelabel:

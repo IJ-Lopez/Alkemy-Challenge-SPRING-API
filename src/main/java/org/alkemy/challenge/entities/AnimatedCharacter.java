@@ -1,8 +1,9 @@
 package org.alkemy.challenge.entities;
 
-import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -12,6 +13,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.Past;
 
 @Entity
 public class AnimatedCharacter {
@@ -20,35 +22,52 @@ public class AnimatedCharacter {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, optional = true)
+    @JsonProperty("image")
     private Photo image;
 
+    @JsonProperty("name")
     private String name;
+    
+    @JsonProperty("age")
     private Integer age;
+    
+    @JsonProperty("weight")
     private Integer weight;
+    
+    @JsonProperty("lore")
     private String lore;
 
     @ManyToMany(mappedBy = "cast")
-    private List<Production> associateProductions = new ArrayList();
+    private Set<Production> associateProductions = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)
+    @Past
     private Date upload = new Date();
     
     @Temporal(value = TemporalType.TIMESTAMP)
+    @Past
     private Date shutdown;
 
     public AnimatedCharacter() {
     }
 
-    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore, List<Production> associateProductions) {
+    public AnimatedCharacter(String name) {
+        this.name = name;
+    }
+    
+    public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore) {
         this.image = image;
         this.name = name;
         this.age = age;
         this.weight = weight;
         this.lore = lore;
-        this.associateProductions = associateProductions;
     }
 
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    
     public Integer getId() {
         return id;
     }
@@ -93,11 +112,11 @@ public class AnimatedCharacter {
         this.lore = lore;
     }
 
-    public List<Production> getAssociateProductions() {
+    public Set<Production> getAssociateProductions() {
         return associateProductions;
     }
 
-    public void setAssociateProductions(List<Production> associateProductions) {
+    public void setAssociateProductions(Set<Production> associateProductions) {
         this.associateProductions = associateProductions;
     }
 
