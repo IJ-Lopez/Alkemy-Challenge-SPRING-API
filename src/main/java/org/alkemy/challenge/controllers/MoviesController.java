@@ -41,7 +41,7 @@ public class MoviesController {
     @Autowired
     private PhotoService photoServ;
 
-    @PostMapping(params = {"movie"})
+    @PostMapping(consumes = "application/json")
     public ResponseEntity add(@RequestBody Film movie) {
         try {
             return new ResponseEntity(filmServ.create(movie), HttpStatus.CREATED);
@@ -52,13 +52,13 @@ public class MoviesController {
     }
 
     @PostMapping(params = {"title"})
-    public ResponseEntity add(@RequestParam String title, @RequestParam(required = false) Integer imageId, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
+    public ResponseEntity add(@RequestParam String title, @RequestParam(required = false) Integer photoId, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
-            Photo image = null;
-            if (imageId != null) {
-                image = photoServ.get(imageId);
+            Photo photo = null;
+            if (photoId != null) {
+                photo = photoServ.get(photoId);
             }
-            return add(new Film(image, title, creation, stars, cast, categories));
+            return add(new Film(photo, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
@@ -68,75 +68,33 @@ public class MoviesController {
     @PostMapping(params = {"title", "file"})
     public ResponseEntity add(@RequestParam String title, @RequestParam MultipartFile file, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
-            Photo image = null;
+            Photo photo = null;
             if (file != null) {
-                image = photoServ.create(file);
+                photo = photoServ.create(file);
             }
-            return add(new Film(image, title, creation, stars, cast, categories));
+            return add(new Film(photo, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
-    @PostMapping(params = {"title", "image"})
-    public ResponseEntity add(@RequestParam String title, @RequestParam Photo image, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, Set<Category> categories) {
+    @PostMapping(params = {"title", "photo"})
+    public ResponseEntity add(@RequestParam String title, @RequestParam Photo photo, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, Set<Category> categories) {
         try {
-            if (image != null) {
-                image = photoServ.create(image);
+            if (photo != null) {
+                photo = photoServ.create(photo);
             }
-            return add(new Film(image, title, creation, stars, cast, categories));
+            return add(new Film(photo, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
-    @PutMapping(params = {"movie"})
     public ResponseEntity forceAdd(@RequestBody Film movie) {
         try {
             return new ResponseEntity(filmServ.forceCreate(movie), HttpStatus.CREATED);
-        } catch (ServiceException ex) {
-            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-    }
-
-    @PutMapping(params = {"title"})
-    public ResponseEntity forceAdd(@RequestParam String title, @RequestParam Integer imageId, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
-        try {
-            Photo image = null;
-            if (imageId != null) {
-                image = photoServ.get(imageId);
-            }
-            return forceAdd(new Film(image, title, creation, stars, cast, categories));
-        } catch (ServiceException ex) {
-            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-    }
-
-    @PutMapping(params = {"title", "file"})
-    public ResponseEntity forceAdd(@RequestParam String title, @RequestParam MultipartFile file, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
-        try {
-            Photo image = null;
-            if (file != null) {
-                image = photoServ.create(file);
-            }
-            return forceAdd(new Film(image, title, creation, stars, cast, categories));
-        } catch (ServiceException ex) {
-            Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-    }
-
-    @PutMapping(params = {"title", "image"})
-    public ResponseEntity forceAdd(@RequestParam String title, @RequestParam Photo image, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, Set<Category> categories) {
-        try {
-            if (image != null) {
-                image = photoServ.create(image);
-            }
-            return forceAdd(new Film(image, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
@@ -201,15 +159,15 @@ public class MoviesController {
         }
     }
 
-    @PatchMapping(path = "/{id}", params = {"image"})
-    public ResponseEntity update(@PathVariable Integer id, @RequestParam Photo image, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
+    @PatchMapping(path = "/{id}", params = {"photo"})
+    public ResponseEntity update(@PathVariable Integer id, @RequestParam Photo photo, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
             if (id == null) {
                 throw new ServiceException("ID cannot be null");
             }
             Film f = filmServ.get(id);
-            if (image != null) {
-                f.setImage(photoServ.createIfNotExists(image));
+            if (photo != null) {
+                f.setImage(photoServ.createIfNotExists(photo));
             }
             if (title != null && !title.isEmpty()) {
                 f.setTitle(title);
@@ -235,13 +193,13 @@ public class MoviesController {
     }
 
     @PatchMapping(path = "/{id}")
-    public ResponseEntity update(@PathVariable Integer id, @RequestParam Integer photoId, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
+    public ResponseEntity update(@PathVariable Integer id, @RequestParam(required = false) Integer photoId, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
-            Photo image = null;
+            Photo photo = null;
             if (photoId != null) {
-                image = photoServ.get(photoId);
+                photo = photoServ.get(photoId);
             }
-            return update(id, image, title, creation, stars, cast, categories);
+            return update(id, photo, title, creation, stars, cast, categories);
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
@@ -251,19 +209,19 @@ public class MoviesController {
     @PatchMapping(path = "/{id}", params = {"file"})
     public ResponseEntity update(@PathVariable Integer id, @RequestParam MultipartFile file, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
-            Photo image = null;
+            Photo photo = null;
             if (file != null) {
-                image = new Photo(file);
+                photo = new Photo(file);
             }
-            return update(id, image, title, creation, stars, cast, categories);
+            return update(id, photo, title, creation, stars, cast, categories);
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
-    @PatchMapping(path = "/{id}", params = {"movie"})
-    public ResponseEntity update(@PathVariable Integer id, @RequestParam Film movie) {
+    @PatchMapping(path = "/{id}", consumes = "application/json")
+    public ResponseEntity update(@PathVariable Integer id, @RequestBody Film movie) {
         try {
             if (movie == null) {
                 throw new ServiceException("Film cannot be null");
@@ -275,21 +233,21 @@ public class MoviesController {
         }
     }
 
-    @PutMapping(path = "/{id}", params = {"image"})
-    public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestParam Photo image, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
-        Film film = new Film(image, title, creation, stars, cast, categories);
+    @PutMapping(path = "/{id}", params = {"photo"})
+    public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestParam Photo photo, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
+        Film film = new Film(photo, title, creation, stars, cast, categories);
         try {
             filmServ.update(id, film);
             return new ResponseEntity(HttpStatus.OK);
         } catch (ServiceException ex) {
-            if (image != null) {
+            if (photo != null) {
                 try {
-                    image = photoServ.create(image);
+                    photo = photoServ.create(photo);
                 } catch (ServiceException e) {
                     return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
                 }
             }
-            film.setImage(image);
+            film.setImage(photo);
             film.setId(id);
             return forceAdd(film);
         }
@@ -298,11 +256,11 @@ public class MoviesController {
     @PutMapping(path = "/{id}")
     public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestParam Integer photoId, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
-            Photo image = null;
+            Photo photo = null;
             if (photoId != null) {
-                image = photoServ.get(photoId);
+                photo = photoServ.get(photoId);
             }
-            return forceUpdate(id, image, title, creation, stars, cast, categories);
+            return forceUpdate(id, photo, title, creation, stars, cast, categories);
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
@@ -312,19 +270,19 @@ public class MoviesController {
     @PutMapping(path = "/{id}", params = {"file"})
     public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestParam MultipartFile file, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
-            Photo image = null;
+            Photo photo = null;
             if (file != null) {
-                image = new Photo(file);
+                photo = new Photo(file);
             }
-            return forceUpdate(id, image, title, creation, stars, cast, categories);
+            return forceUpdate(id, photo, title, creation, stars, cast, categories);
         } catch (ServiceException ex) {
             Logger.getLogger(MoviesController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
-    @PutMapping(path = "/{id}", params = {"movie"})
-    public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestParam Film movie) {
+    @PutMapping(path = "/{id}", consumes = "application/json")
+    public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestBody Film movie) {
         try {
             if (movie == null) {
                 throw new ServiceException("Film cannot be null");

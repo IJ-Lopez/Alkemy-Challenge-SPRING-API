@@ -1,5 +1,6 @@
 package org.alkemy.challenge.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
@@ -20,8 +21,10 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JsonProperty("name")
     private String name;
 
+    @JsonProperty("image")
     @OneToOne
     private Photo image;
 

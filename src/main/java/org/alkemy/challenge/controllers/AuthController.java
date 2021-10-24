@@ -9,6 +9,7 @@ import org.alkemy.challenge.services.exceptions.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,6 +38,16 @@ public class AuthController {
             Logger.getLogger(AuthController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(),HttpStatus.UNPROCESSABLE_ENTITY);
         }
+    }
+    
+    @GetMapping("/error")
+    public ResponseEntity error(){
+        return new ResponseEntity(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    
+    @GetMapping("/success")
+    public ResponseEntity success(){
+        return new ResponseEntity(HttpStatus.OK);
     }
     
 }

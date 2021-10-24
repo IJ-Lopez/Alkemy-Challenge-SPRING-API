@@ -54,7 +54,10 @@ public class AnimatedCharacterService {
         if (ac.getName() == null || ac.getName().isEmpty()) {
             throw new ServiceException("Animated Character name cannot be null");
         }
-        if (ac.getWeight() != null || ac.getWeight() < 0) {
+        if (ac.getWeight() != null && ac.getWeight() < 0) {
+            throw new ServiceException("Animated Character weight has to be a positive number");
+        }
+        if (ac.getAge() != null && ac.getAge() < 0) {
             throw new ServiceException("Animated Character weight has to be a positive number");
         }
         if (isSaved(ac)) {
@@ -69,6 +72,7 @@ public class AnimatedCharacterService {
             }
         }
         ac.setAssociateProductions(null);
+        ac.setUpload(new Date());
         return acRepo.save(ac);
     }
 

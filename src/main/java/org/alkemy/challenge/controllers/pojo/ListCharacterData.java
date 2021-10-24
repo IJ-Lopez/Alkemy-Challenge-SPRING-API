@@ -5,9 +5,9 @@ import org.alkemy.challenge.entities.Photo;
 
 public class ListCharacterData {
     
-    private Photo image;
     private int id;
     private String name;
+    private Photo image;
 
     public ListCharacterData() {
     }

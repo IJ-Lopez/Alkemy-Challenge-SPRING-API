@@ -4,9 +4,9 @@ import org.alkemy.challenge.entities.Category;
 import org.alkemy.challenge.entities.Photo;
 
 public class ListCategoryData {
-    private Photo image;
     private int id;
     private String name;
+    private Photo image;
 
     public ListCategoryData() {
     }

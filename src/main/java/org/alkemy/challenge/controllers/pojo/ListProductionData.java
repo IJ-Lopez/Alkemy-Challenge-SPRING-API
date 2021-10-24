@@ -7,8 +7,8 @@ import org.alkemy.challenge.entities.Production;
 
 public class ListProductionData {
     private Integer id;
-    private Photo image;
     private String title;
+    private Photo image;
     private Date creation;
     private String type;
 

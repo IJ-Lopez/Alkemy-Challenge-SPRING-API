@@ -1,5 +1,6 @@
 package org.alkemy.challenge.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
@@ -19,11 +20,16 @@ public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    
+    @JsonProperty("name")
     private String name;
+    
+    @JsonProperty("mime")
     private String mime;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
+    @JsonProperty("content")
     private byte[] content;
 
     public Photo() {

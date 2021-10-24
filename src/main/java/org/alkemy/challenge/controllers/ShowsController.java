@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/show")
+@RequestMapping("/shows")
 public class ShowsController {
 
     @Autowired
@@ -41,7 +41,7 @@ public class ShowsController {
     @Autowired
     private PhotoService photoServ;
 
-    @PostMapping(params = {"show"})
+    @PostMapping(consumes = "application/json")
     public ResponseEntity add(@RequestBody Show show) {
         try {
             return new ResponseEntity(showServ.create(show), HttpStatus.CREATED);
@@ -92,51 +92,9 @@ public class ShowsController {
         }
     }
 
-    @PutMapping(params = {"show"})
     public ResponseEntity forceAdd(@RequestBody Show show) {
         try {
             return new ResponseEntity(showServ.forceCreate(show), HttpStatus.CREATED);
-        } catch (ServiceException ex) {
-            Logger.getLogger(ShowsController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-    }
-
-    @PutMapping(params = {"title"})
-    public ResponseEntity forceAdd(@RequestParam String title, @RequestParam Integer imageId, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
-        try {
-            Photo image = null;
-            if (imageId != null) {
-                image = photoServ.get(imageId);
-            }
-            return forceAdd(new Show(image, title, creation, stars, cast, categories));
-        } catch (ServiceException ex) {
-            Logger.getLogger(ShowsController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-    }
-
-    @PutMapping(params = {"title", "file"})
-    public ResponseEntity forceAdd(@RequestParam String title, @RequestParam MultipartFile file, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
-        try {
-            Photo image = null;
-            if (file != null) {
-                image = photoServ.create(file);
-            }
-            return forceAdd(new Show(image, title, creation, stars, cast, categories));
-        } catch (ServiceException ex) {
-            Logger.getLogger(ShowsController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-    }
-
-    @PutMapping(params = {"title", "image"})
-    public ResponseEntity forceAdd(@RequestParam String title, @RequestParam Photo image, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, Set<Category> categories) {
-        try {
-            if (image != null) {
-                image = photoServ.create(image);
-            }
-            return forceAdd(new Show(image, title, creation, stars, cast, categories));
         } catch (ServiceException ex) {
             Logger.getLogger(ShowsController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
@@ -235,7 +193,7 @@ public class ShowsController {
     }
 
     @PatchMapping(path = "/{id}")
-    public ResponseEntity update(@PathVariable Integer id, @RequestParam Integer photoId, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
+    public ResponseEntity update(@PathVariable Integer id, @RequestParam(required = false) Integer photoId, @RequestParam(required = false) String title, @RequestParam(required = false) Date creation, @RequestParam(required = false) Stars stars, @RequestParam(required = false) Set<AnimatedCharacter> cast, @RequestParam(required = false) Set<Category> categories) {
         try {
             Photo image = null;
             if (photoId != null) {
@@ -262,8 +220,8 @@ public class ShowsController {
         }
     }
 
-    @PatchMapping(path = "/{id}", params = {"show"})
-    public ResponseEntity update(@PathVariable Integer id, @RequestParam Show show) {
+    @PatchMapping(path = "/{id}", consumes = "application/json")
+    public ResponseEntity update(@PathVariable Integer id, @RequestBody Show show) {
         try {
             if (show == null) {
                 throw new ServiceException("Show cannot be null");
@@ -323,8 +281,8 @@ public class ShowsController {
         }
     }
 
-    @PutMapping(path = "/{id}", params = {"show"})
-    public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestParam Show show) {
+    @PutMapping(path = "/{id}", consumes = "application/json")
+    public ResponseEntity forceUpdate(@PathVariable Integer id, @RequestBody Show show) {
         try {
             if (show == null) {
                 throw new ServiceException("Show cannot be null");

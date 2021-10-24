@@ -1,5 +1,7 @@
 package org.alkemy.challenge.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
@@ -33,14 +35,19 @@ public abstract class Production {
     private Integer id;
 
     @OneToOne
+    @JsonProperty("image")
     private Photo image;
 
+    @JsonProperty("title")
     private String title;
 
     @Temporal(value = TemporalType.DATE)
+    @JsonProperty("creation")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date creation;
 
     @Enumerated(EnumType.ORDINAL)
+    @JsonProperty("stars")
     private Stars stars;
 
     @ManyToMany
@@ -49,6 +56,7 @@ public abstract class Production {
             joinColumns = @JoinColumn(name = "PRODUCTION_ID", referencedColumnName = "ID"),
             inverseJoinColumns = @JoinColumn(name = "ANIMATEDCHARACTER_ID", referencedColumnName = "ID")
     )
+    @JsonProperty("cast")
     private Set<AnimatedCharacter> cast  = new HashSet();
 
     @ManyToMany
@@ -57,6 +65,7 @@ public abstract class Production {
             joinColumns = @JoinColumn(name = "CATEGORY_ID", referencedColumnName = "ID"),
             inverseJoinColumns = @JoinColumn(name = "PRODUCTION_ID", referencedColumnName = "ID")
     )
+    @JsonProperty("categories")
     private Set<Category> categories  = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)

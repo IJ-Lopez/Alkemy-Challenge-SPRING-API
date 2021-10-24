@@ -1,5 +1,6 @@
 package org.alkemy.challenge.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +13,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.Past;
 
 @Entity
 public class AnimatedCharacter {
@@ -21,25 +23,39 @@ public class AnimatedCharacter {
     private Integer id;
 
     @OneToOne(cascade = CascadeType.ALL, optional = true)
+    @JsonProperty("image")
     private Photo image;
 
+    @JsonProperty("name")
     private String name;
+    
+    @JsonProperty("age")
     private Integer age;
+    
+    @JsonProperty("weight")
     private Integer weight;
+    
+    @JsonProperty("lore")
     private String lore;
 
     @ManyToMany(mappedBy = "cast")
     private Set<Production> associateProductions = new HashSet();
 
     @Temporal(value = TemporalType.TIMESTAMP)
+    @Past
     private Date upload = new Date();
     
     @Temporal(value = TemporalType.TIMESTAMP)
+    @Past
     private Date shutdown;
 
     public AnimatedCharacter() {
     }
 
+    public AnimatedCharacter(String name) {
+        this.name = name;
+    }
+    
     public AnimatedCharacter(Photo image, String name, Integer age, Integer weight, String lore) {
         this.image = image;
         this.name = name;
